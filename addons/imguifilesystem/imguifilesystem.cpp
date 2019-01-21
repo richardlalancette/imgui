@@ -134,6 +134,8 @@ enum Sorting {
 */
 #   endif //(defined(_MSC_VER) && !defined(strcasecmp))
 
+#define EPSILON (0.0000001f)
+#define FLOAT_EQUAL(a, b) (fabs(a-b) < EPSILON)
 
 namespace ImGuiFs {
 
@@ -162,7 +164,7 @@ protected:
 public:
     inline static void PushBack(FilenameStringVector& rv,const char* s)    {	
         if (rv.Size == rv.Capacity) rv.reserve(rv._grow_capacity(rv.Size+1));	// optional optimization from ImVector<>::push_back()
-        const size_t sz = rv.size();
+        const int sz = rv.size();
         rv.resize(sz+1);
         strcpy(&rv[sz][0], s ? s : "\0");
     }
@@ -181,7 +183,7 @@ public:
     }
     inline static int Find(const char* text,const char toFind,int beg=0)   {
         if (!text) return -1;
-        for (size_t i=beg,len=strlen(text);i<len;i++)    {
+        for (int i=beg,len= static_cast<int>(strlen(text)); i<len; i++)    {
             if (text[i]==toFind) return i;
         }
         return -1;
@@ -295,7 +297,7 @@ public:
     }
     static void GetDirectoryName(const char *filePath, char *rv) {
         rv[0]='\0';if (!filePath) return;
-        const int sz = strlen(filePath);
+        const int sz = static_cast<const int>(strlen(filePath));
         if (sz==0 || strcmp(filePath,"/")==0 || strcmp(filePath,"\\")==0) {
             strcpy(rv,filePath);
             return;
@@ -409,7 +411,7 @@ public:
         static const int dot = (int) '.';
         const char * p1 = strrchr(filePath, dot );
         if (!p1) return false;
-        const int len = strlen(p1);
+        const int len = static_cast<const int>(strlen(p1));
         if (len!=4) return false;
         static const char lower[]=".zip";static const char upper[]=".ZIP";
         char c;
@@ -570,12 +572,12 @@ public:
         const int n = scandir (directoryName2, &eps, DirentGetDirectories, SortingHelper::SetSorter(sorting));
 
         static char directoryNameWithoutSlash[MAX_PATH_BYTES];
-        if (sz>0 && directoryName[sz-1] == '/') String::Substr(directoryName,directoryNameWithoutSlash,0,sz-1);
+        if (sz>0 && directoryName[sz-1] == '/') String::Substr(directoryName,directoryNameWithoutSlash,0, static_cast<int>(sz-1));
         else strcpy(directoryNameWithoutSlash,directoryName);
 
         if (n >= 0) {
-        result.reserve((size_t)n);
-        if (pOptionalNamesOut) pOptionalNamesOut->reserve((size_t)n);
+        result.reserve(static_cast<int>((size_t)n));
+        if (pOptionalNamesOut) pOptionalNamesOut->reserve(static_cast<int>((size_t)n));
             for (int cnt = 0; cnt < n; ++cnt)    {
                 const char* pName = &eps[cnt]->d_name[0];
                 sz = strlen(pName);
@@ -613,12 +615,12 @@ public:
         const int n = scandir (directoryName2, &eps, DirentGetFiles, SortingHelper::SetSorter(sorting));
 
         static char directoryNameWithoutSlash[MAX_PATH_BYTES];
-        if (sz>0 && directoryName[sz-1] == '/') String::Substr(directoryName,directoryNameWithoutSlash,0,sz-1);
+        if (sz>0 && directoryName[sz-1] == '/') String::Substr(directoryName,directoryNameWithoutSlash,0, static_cast<int>(sz-1));
         else strcpy(directoryNameWithoutSlash,directoryName);
 
         if (n >= 0) {
-        result.reserve((size_t)n);
-        if (pOptionalNamesOut) pOptionalNamesOut->reserve((size_t)n);
+        result.reserve(static_cast<int>((size_t)n));
+        if (pOptionalNamesOut) pOptionalNamesOut->reserve(static_cast<int>((size_t)n));
             for (int cnt = 0; cnt < n; ++cnt)    {
                 const char* pName = &eps[cnt]->d_name[0];
 		sz = strlen(pName);
@@ -653,11 +655,11 @@ public:
         files.reserve(filesIn.size());
         if (pOptionalNamesOut) pOptionalNamesOut->reserve(namesIn.size());
 	    FilenameStringVector wExts;String::Split(wext,wExts,';');
-            const size_t wExtsSize = wExts.size();
+            const int wExtsSize = wExts.size();
             if (wExtsSize>0)	{
-                for (size_t i = 0,sz = filesIn.size();i<sz;i++)	{
+                for (int i = 0,sz = static_cast<int>(filesIn.size()); i<sz; i++)	{
                     Path::GetExtension(filesIn[i],ext);
-                    for (size_t e=0;e<wExtsSize;e++)	{
+                    for (int e=0;e<wExtsSize;e++)	{
                         if (strcmp(ext,wExts[e])==0) {
                             String::PushBack(files,filesIn[i]);
                             if (pOptionalNamesOut) String::PushBack(*pOptionalNamesOut,namesIn[i]);
@@ -670,13 +672,13 @@ public:
         else if (unwantedExtensions && strlen(unwantedExtensions)>0) {
 	    //files.reserve(filesIn.size());if (pOptionalNamesOut) pOptionalNamesOut->reserve(namesIn.size());
 	    FilenameStringVector woExts;String::Split(woext,woExts,';');
-            const size_t woExtsSize = woExts.size();
+            const int woExtsSize = woExts.size();
             if (woExts.size()==0) {files = filesIn;return;}
             bool match;
-            for (size_t i = 0,sz = filesIn.size();i<sz;i++)	{
+            for (int i = 0,sz = filesIn.size(); i<sz; i++)	{
                 Path::GetExtension(filesIn[i],ext);
                 match = false;
-                for (size_t e=0;e<woExtsSize;e++)	{
+                for (int e=0;e<woExtsSize;e++)	{
                     if (strcmp(ext,woExts[e])==0) {
                         match = true;
                         break;
@@ -1362,7 +1364,7 @@ void PathGetAbsoluteWithZipSupport(const char* path,char* rv)   {
 }
 
 #endif //IMGUI_USE_MINIZIP
-template <typename CharType> bool FileGetContentBase(const char* path,ImVector<CharType>& bufferOut,bool openInTextMode,const char* password) {
+template <typename CharType> bool FileGetContentBase(const char* path,ImVector<CharType>& bufferOut,bool openInTextMode, __unused const char* password) {
     bufferOut.clear();
     char mainPath[MAX_PATH_BYTES];
 #   ifdef IMGUI_USE_MINIZIP
@@ -1380,8 +1382,8 @@ template <typename CharType> bool FileGetContentBase(const char* path,ImVector<C
     if (!fin) return false;
     fseek(fin,0,SEEK_END);
     const long szl = ftell(fin);
-    const size_t sz = (size_t) szl;
-    if ((sizeof(long)>sizeof(size_t) && szl!=(long)sz) || (sizeof(long)<sizeof(size_t) && (size_t)szl!=sz))    {
+    const int sz = static_cast<const int>(szl);
+    if ((sizeof(long)>sizeof(size_t) && szl!=(long)sz) || (sizeof(long)<sizeof(size_t) && szl!=sz))    {
         fprintf(stderr,"Error in: FileGetContent(\"%s\"): file too big.\n",mainPath);
         fclose(fin);fin=NULL;
         return false;
@@ -1422,7 +1424,7 @@ struct ImGuiFsDrawIconStruct {
     char* token = strtok(tmp,";");
     int sz = 0,vSz=0;
     while(token) {
-        sz=strlen(token);
+        sz= static_cast<int>(strlen(token));
         vSz=v.size();
         vStarters.push_back(vSz);
         vStartersLengths.push_back(sz);
@@ -1462,7 +1464,7 @@ struct ImGuiFsDrawIconStruct {
     int getExtensionType(const char* ext,bool caseSensitiveMatch=false) const {
         if (!ext) return -1;
         if (ext[0]=='.') ext+=1;
-        const int extLen = strlen(ext);
+        const int extLen = static_cast<const int>(strlen(ext));
         if (extLen==0) return -1;
         typedef int (*strcmpdelegate) (const char*, const char*);
         const strcmpdelegate myStrCmp = caseSensitiveMatch ? &strcmp : &strcasecmp;
@@ -1553,7 +1555,7 @@ struct FolderInfo    {
             splitPathIndexOfZipFile = GetSplitPathIndexOfZipFile(SplitPath);
         }
     }
-    inline static int GetSplitPathIndexOfZipFile(const FilenameStringVector& SplitPath) {
+    inline static int GetSplitPathIndexOfZipFile(__unused const FilenameStringVector& SplitPath) {
             int splitPathIndexOfZipFile = -1;
 #           ifdef IMGUI_USE_MINIZIP
             const char* lower = ".zip";const char* upper = ".ZIP";const int numCharsToMath = (int)strlen(lower);int gc=0;
@@ -1914,7 +1916,7 @@ static size_t ImFormatString(char* buf, size_t buf_size, const char* fmt, ...)
 // ---------------------
 
 // 90% of the functionality of the whole imguifilesystem.cpp is inside this single method
-const char* ChooseFileMainMethod(Dialog& ist,const char* directory,const bool _isFolderChooserDialog,const bool _isSaveFileDialog,const char* _saveFileName,const char* fileFilterExtensionString,const char* windowTitle,const ImVec2& windowSize,const ImVec2& windowPos,const float windowAlpha) {
+const char* ChooseFileMainMethod(Dialog& ist,const char* directory,const bool _isFolderChooserDialog,const bool _isSaveFileDialog,const char* _saveFileName,const char* fileFilterExtensionString,const char* windowTitle,const ImVec2& windowSize,const ImVec2& windowPos,__unused const float windowAlpha) {
     //-----------------------------------------------------------------------------
     Internal& I = *ist.internal;
     char* rv = I.chosenPath;rv[0] = '\0';
@@ -2344,7 +2346,7 @@ const char* ChooseFileMainMethod(Dialog& ist,const char* directory,const bool _i
                     }
                     else if (t>0) ImGui::SameLine(0,0);
                     const bool pressed = ImGui::Button(I.currentSplitPath[t]);
-                    if (wrapMode && sumX==0)    {sumX = ImGui::GetStyle().WindowPadding.x + ImGui::GetItemRectSize().x;}
+                    if (wrapMode && FLOAT_EQUAL(sumX,0))    {sumX = ImGui::GetStyle().WindowPadding.x + ImGui::GetItemRectSize().x;}
                     ImGui::PopID();
                     if (pressed) {
                         if (fi.splitPathIndex!=t && !mustSwitchSplitPath) mustSwitchSplitPath = true;
@@ -2762,14 +2764,14 @@ const char* ChooseFileMainMethod(Dialog& ist,const char* directory,const bool _i
                         const bool saveFileNameHasExtension = strlen(saveFileNameExtension)>0;
                         //-------------------------------------------------------------------
                         FilenameStringVector wExts;String::Split(fileFilterExtensionString,wExts,';');
-                        const size_t wExtsSize = wExts.size();
+                        const int wExtsSize = wExts.size();
                         if (!saveFileNameHasExtension)   {
                             if (wExtsSize==0) pathOk = true;    // Bad situation, better allow this case
                             else strcat(I.saveFileName,wExts[0]);
                         }
                         else    {
                             // saveFileNameHasExtension
-                            for (size_t i = 0;i<wExtsSize;i++)	{
+                            for (int i = 0;i<wExtsSize;i++)	{
                                 const char* ext = wExts[i];
                                 if (strcmp(ext,saveFileNameExtension)==0)   {
                                     pathOk = true;
