@@ -197,6 +197,9 @@ struct ImVec2
     ImVec2(float _x, float _y) { x = _x; y = _y; }
     float  operator[] (size_t idx) const { IM_ASSERT(idx <= 1); return (&x)[idx]; }    // We very rarely use this [] operator, the assert overhead is fine.
     float& operator[] (size_t idx)       { IM_ASSERT(idx <= 1); return (&x)[idx]; }    // We very rarely use this [] operator, the assert overhead is fine.
+    inline ImVec2 operator + (const ImVec2 & in) { return ImVec2(x+in.x, y+in.y); }
+    inline ImVec2 operator - (const ImVec2 & in) { return ImVec2(x-in.x, y-in.y); }
+
 #ifdef IM_VEC2_CLASS_EXTRA
     IM_VEC2_CLASS_EXTRA     // Define additional constructors and implicit cast operators in imconfig.h to convert back and forth between your math types and ImVec2.
 #endif
@@ -205,6 +208,14 @@ struct ImVec2
 // 4D vector (often used to store floating-point colors)
 struct ImVec4
 {
+    ImVec4(float floatArray[4])
+    {
+        x = floatArray[0];
+        y = floatArray[1];
+        z = floatArray[2];
+        w = floatArray[3];
+    }
+
     float     x, y, z, w;
     ImVec4()  { x = y = z = w = 0.0f; }
     ImVec4(float _x, float _y, float _z, float _w) { x = _x; y = _y; z = _z; w = _w; }

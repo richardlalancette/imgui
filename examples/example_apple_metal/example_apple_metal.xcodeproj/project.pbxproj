@@ -36,6 +36,16 @@
 		83BBEA0820EB54E700295997 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0220EB54E700295997 /* imgui_demo.cpp */; };
 		83BBEA0920EB54E700295997 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0320EB54E700295997 /* imgui.cpp */; };
 		83BBEA0A20EB54E700295997 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0320EB54E700295997 /* imgui.cpp */; };
+		C500C157E000476F4E00DF84 /* ProggyTiny.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500C3495752AD3D38C05C07 /* ProggyTiny.ttf */; };
+		C500C4C210C149BFF368ACCA /* Roboto-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500C5F8808E8B2019A38CDB /* Roboto-Black.ttf */; };
+		C500C698E707A1BD1F5FB562 /* fa-regular-400.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500C2D60C1D247DA528A28D /* fa-regular-400.ttf */; };
+		C500C71BC8E2A7E7E1F76ECE /* Karla-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500CD13381FA6988190696D /* Karla-Regular.ttf */; };
+		C500C71D0DFB51AEA6ACD705 /* fa-solid-900.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500CE9A8A4C0F9E9265A2FE /* fa-solid-900.ttf */; };
+		C500CA7F6F0A2F76F2A3769C /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500C926269069956DCEBAFD /* DroidSans.ttf */; };
+		C500CAB0931EA89A0FB0C42B /* Cousine-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500CD59183A724041DE4D0B /* Cousine-Regular.ttf */; };
+		C500CB0CC616B6A966C26DA7 /* Roboto-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500CE6EA2FF71796B0A02F5 /* Roboto-Medium.ttf */; };
+		C500CE284FE42A6EA0087A55 /* fa-brands-400.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500CACA0614F2D7C3574358 /* fa-brands-400.ttf */; };
+		C500CEA1BB4953689476F007 /* Roboto-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C500C3174EC940432ABCDFB0 /* Roboto-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -71,6 +81,20 @@
 		83BBEA0220EB54E700295997 /* imgui_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui_demo.cpp; path = ../../imgui_demo.cpp; sourceTree = "<group>"; };
 		83BBEA0320EB54E700295997 /* imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui.cpp; path = ../../imgui.cpp; sourceTree = "<group>"; };
 		83BBEA0420EB54E700295997 /* imconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imconfig.h; path = ../../imconfig.h; sourceTree = "<group>"; };
+		C500C2D60C1D247DA528A28D /* fa-regular-400.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "fa-regular-400.ttf"; sourceTree = "<group>"; };
+		C500C3174EC940432ABCDFB0 /* Roboto-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Roboto-Regular.ttf"; sourceTree = "<group>"; };
+		C500C3495752AD3D38C05C07 /* ProggyTiny.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = ProggyTiny.ttf; sourceTree = "<group>"; };
+		C500C479D4AACC9F39F3ED2C /* designsystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = designsystem.h; sourceTree = "<group>"; };
+		C500C5F8808E8B2019A38CDB /* Roboto-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Roboto-Black.ttf"; sourceTree = "<group>"; };
+		C500C81B5452A922D409C58E /* picojson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picojson.h; sourceTree = "<group>"; };
+		C500C8D687FA3516D459A5EC /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = json.hpp; sourceTree = "<group>"; };
+		C500C926269069956DCEBAFD /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = DroidSans.ttf; sourceTree = "<group>"; };
+		C500CACA0614F2D7C3574358 /* fa-brands-400.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "fa-brands-400.ttf"; sourceTree = "<group>"; };
+		C500CD13381FA6988190696D /* Karla-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Karla-Regular.ttf"; sourceTree = "<group>"; };
+		C500CD59183A724041DE4D0B /* Cousine-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Cousine-Regular.ttf"; sourceTree = "<group>"; };
+		C500CE6EA2FF71796B0A02F5 /* Roboto-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Roboto-Medium.ttf"; sourceTree = "<group>"; };
+		C500CE9A8A4C0F9E9265A2FE /* fa-solid-900.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "fa-solid-900.ttf"; sourceTree = "<group>"; };
+		C500CEE78B82F7C8310257EF /* IconsFontAwesome5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IconsFontAwesome5.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,8 +203,30 @@
 				83BBEA0120EB54E700295997 /* imgui_draw.cpp */,
 				07A82ED62139413C0078D120 /* imgui_internal.h */,
 				07A82ED72139413C0078D120 /* imgui_widgets.cpp */,
+				C500C81B5452A922D409C58E /* picojson.h */,
+				C500C869CD0582E49A3726A7 /* nlohmann */,
+				C500CEE78B82F7C8310257EF /* IconsFontAwesome5.h */,
+				C500CE9A8A4C0F9E9265A2FE /* fa-solid-900.ttf */,
+				C500CACA0614F2D7C3574358 /* fa-brands-400.ttf */,
+				C500C2D60C1D247DA528A28D /* fa-regular-400.ttf */,
+				C500C5F8808E8B2019A38CDB /* Roboto-Black.ttf */,
+				C500CE6EA2FF71796B0A02F5 /* Roboto-Medium.ttf */,
+				C500C3174EC940432ABCDFB0 /* Roboto-Regular.ttf */,
+				C500C926269069956DCEBAFD /* DroidSans.ttf */,
+				C500C3495752AD3D38C05C07 /* ProggyTiny.ttf */,
+				C500CD59183A724041DE4D0B /* Cousine-Regular.ttf */,
+				C500CD13381FA6988190696D /* Karla-Regular.ttf */,
+				C500C479D4AACC9F39F3ED2C /* designsystem.h */,
 			);
 			name = imgui;
+			sourceTree = "<group>";
+		};
+		C500C869CD0582E49A3726A7 /* nlohmann */ = {
+			isa = PBXGroup;
+			children = (
+				C500C8D687FA3516D459A5EC /* json.hpp */,
+			);
+			path = nlohmann;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -266,6 +312,16 @@
 				836D2A3220EE4A900098E909 /* Launch Screen.storyboard in Resources */,
 				8307E7CF20E9F9C900473790 /* Main.storyboard in Resources */,
 				836D2A3020EE4A180098E909 /* Default-568h@2x.png in Resources */,
+				C500C71D0DFB51AEA6ACD705 /* fa-solid-900.ttf in Resources */,
+				C500CE284FE42A6EA0087A55 /* fa-brands-400.ttf in Resources */,
+				C500C698E707A1BD1F5FB562 /* fa-regular-400.ttf in Resources */,
+				C500C4C210C149BFF368ACCA /* Roboto-Black.ttf in Resources */,
+				C500CB0CC616B6A966C26DA7 /* Roboto-Medium.ttf in Resources */,
+				C500CEA1BB4953689476F007 /* Roboto-Regular.ttf in Resources */,
+				C500CA7F6F0A2F76F2A3769C /* DroidSans.ttf in Resources */,
+				C500C157E000476F4E00DF84 /* ProggyTiny.ttf in Resources */,
+				C500CAB0931EA89A0FB0C42B /* Cousine-Regular.ttf in Resources */,
+				C500C71BC8E2A7E7E1F76ECE /* Karla-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,7 +397,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -396,7 +452,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
