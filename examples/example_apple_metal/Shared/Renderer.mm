@@ -138,28 +138,30 @@ void EndGroupPanel()
         ImFontConfig mainFontConfig;
         mainFontConfig.FontDataOwnedByAtlas = true;
         mainFontConfig.MergeMode = false;
-        mainFontConfig.OversampleH = 3;
+//        mainFontConfig.OversampleH = 3;
 
-        // This one is a new font; Roboto-Black. Do not merge
-//        std::string bodyFontPath = std::string(getcwd(NULL, 0)) + "/../../Roboto-Regular.ttf";
-        std::string bodyFontPath = std::string(getcwd(NULL, 0)) + "/../../Roboto-Medium.ttf";
-//        std::string bodyFontPath = std::string(getcwd(NULL, 0)) + "/../../DroidSans.ttf";
-        bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 16.0f, &mainFontConfig);
+        auto currentApplicationFolder = std::string(getcwd(NULL, 0));
+        
+//        std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto/Roboto-Regular.ttf";
+        std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
+        bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 18.0f, &mainFontConfig);
 
         ImFontConfig icons_config;
         icons_config.PixelSnapH = true;
         icons_config.MergeMode = true;
+        icons_config.OversampleH = 3;
 
         // Merge this font with the default font for now.
-        std::string iconsFontPath = std::string(getcwd(NULL, 0)) + "/../../fa-solid-900.ttf";
+        std::string iconsFontPath = currentApplicationFolder + "/../../fonts/FontAwesome/fa-solid-900.ttf";
         io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 16.0f, &icons_config, icons_ranges);
 
         // Header 1 font
         ImFontConfig h1FontConfig;
         h1FontConfig.FontDataOwnedByAtlas = true;
         h1FontConfig.MergeMode = false;
-        std::string h1FontPath = std::string(getcwd(NULL, 0)) + "/../../Roboto-Black.ttf";
-        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 18.0f, &h1FontConfig);
+        h1FontConfig.OversampleH = 3;
+        std::string h1FontPath = currentApplicationFolder + "/../../fonts/B612_mono/B612Mono-BoldItalic.ttf";
+        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 36.0f, &h1FontConfig);
 
         ImGui_ImplMetal_Init(_device);
 
@@ -265,34 +267,34 @@ void EndGroupPanel()
         {
             if (ImGui::BeginTabItem(" Macro"))
             {
-                auto macro = motionSpec->find("macro");
-                for (auto &element : *macro)
-                {
-                    ImGui::Separator();
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::Indent(ImGui::GetStyle().IndentSpacing);
-                        ImGui::TextUnformatted(element["name"].get<std::string>().c_str());
-                        ImGui::TextUnformatted(element["description"].get<std::string>().c_str());
-                        ImGui::TextUnformatted(element["element"].get<std::string>().c_str());
-                        ImGui::TextUnformatted(element["transformation"].get<std::string>().c_str());
-                        ImGui::TextUnformatted(element["duration"].get<std::string>().c_str());
-                        ImGui::TextUnformatted(element["delay"].get<std::string>().c_str());
-
-                        //                            auto curve = macro->find("curve");
-                        ImGui::Unindent(ImGui::GetStyle().IndentSpacing);
-                    }
-                    ImGui::EndGroup();
-                }
+//                auto macro = motionSpec->find("macro");
+//                for (auto &element : *macro)
+//                {
+//                    ImGui::Separator();
+//                    ImGui::BeginGroup();
+//                    {
+//                        ImGui::Indent(ImGui::GetStyle().IndentSpacing);
+//                        ImGui::TextUnformatted(element["name"].get<std::string>().c_str());
+//                        ImGui::TextUnformatted(element["description"].get<std::string>().c_str());
+//                        ImGui::TextUnformatted(element["element"].get<std::string>().c_str());
+//                        ImGui::TextUnformatted(element["transformation"].get<std::string>().c_str());
+//                        ImGui::TextUnformatted(element["duration"].get<std::string>().c_str());
+//                        ImGui::TextUnformatted(element["delay"].get<std::string>().c_str());
+//
+//                        //                            auto curve = macro->find("curve");
+//                        ImGui::Unindent(ImGui::GetStyle().IndentSpacing);
+//                    }
+//                    ImGui::EndGroup();
+//                }
                 ImGui::EndTabItem();
             }
 
             if (ImGui::BeginTabItem(" Micro"))
             {
-                auto micro = motionSpec->find("micro");
-                for (auto &element : *micro)
-                {
-                }
+//                auto micro = motionSpec->find("micro");
+//                for (auto &element : *micro)
+//                {
+//                }
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -361,7 +363,7 @@ void EndGroupPanel()
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
                 ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyle().Colors[ImGuiCol_ChildBg]);
                 ImGui::PushFont(H1Font);
-                BeginGroupPanel(flavor.name->c_str(), ImVec2(150.0f, -1.0f));
+                BeginGroupPanel(flavor.name->c_str(), ImVec2(-1.0f, -1.0f));
                 {
                     ImGui::PopFont();
 
