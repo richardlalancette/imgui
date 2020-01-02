@@ -35,14 +35,39 @@ void StyleColorsYouiLight();
 
 void DetailsColorButton(const char *name, float pDouble[4], ImGuiColorEditFlags flags);
 
+static void HelpMarker(const char *desc, const char *icon = "")
+{
+    ImGui::PushFont(bodyFont);
+
+    if (strlen(icon))
+    {
+        ImGui::TextDisabled(icon);
+    }
+    else
+    {
+        ImGui::TextDisabled(" ? ");
+    }
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextWrapped(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+    ImGui::PopFont();
+}
+
 // Not perfect... some clipping on the right side sometimes.
 void BeginGroupPanel(const char *name, const ImVec2 &size = ImVec2(-1.0f, -1.0f))
 {
     ImGui::BeginGroup();
     ImGui::TextUnformatted(name);
+    ImGui::SameLine();
+    HelpMarker("Flavor additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE);
 
     auto itemSpacing = ImGui::GetStyle().ItemSpacing;
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
     auto frameHeight = ImGui::GetFrameHeight();
@@ -69,7 +94,7 @@ void BeginGroupPanel(const char *name, const ImVec2 &size = ImVec2(-1.0f, -1.0f)
     ImGui::Dummy(ImVec2(0.0, frameHeight + itemSpacing.y));
     ImGui::BeginGroup();
 
-    ImGui::PopStyleVar(2);
+    ImGui::PopStyleVar(1);
 
     ImGui::GetCurrentWindow()->ContentRegionRect.Max.x -= frameHeight * 0.5f;
     ImGui::GetCurrentWindow()->Size.x -= frameHeight;
@@ -90,6 +115,7 @@ void EndGroupPanel()
 
     ImGui::EndGroup();
 
+    // Behind the elements only
 //    ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(0, 255, 0, 64), 4.0f);
 
     ImGui::EndGroup();
@@ -102,8 +128,10 @@ void EndGroupPanel()
 
     ImVec2 itemMin = ImGui::GetItemRectMin();
     ImVec2 itemMax = ImGui::GetItemRectMax();
-//    ImGui::GetWindowDrawList()->AddRectFilled(itemMin, itemMax, IM_COL32(255, 0, 0, 64), 4.0f);
+//    ImGui::GetWindowDrawList()->AddRectFilled(itemMin, itemMax, IM_COL32(255, 255, 255, 240), 4.0f);
     ImVec2 halfFrame = ImVec2(frameHeight * 0.25f * 0.5f, frameHeight * 0.5f);
+
+    // Behind Elements and fill parent
 //    ImGui::GetWindowDrawList()->AddRect(itemMin + halfFrame, itemMax - ImVec2(halfFrame.x, 0.0f), ImColor(ImGui::GetStyleColorVec4(ImGuiCol_Border)), halfFrame.x);
 
     ImGui::PopStyleVar(2);
@@ -160,8 +188,8 @@ void EndGroupPanel()
         h1FontConfig.FontDataOwnedByAtlas = true;
         h1FontConfig.MergeMode = false;
         h1FontConfig.OversampleH = 3;
-        std::string h1FontPath = currentApplicationFolder + "/../../fonts/B612_mono/B612Mono-BoldItalic.ttf";
-        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 36.0f, &h1FontConfig);
+        std::string h1FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
+        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 24.0f, &h1FontConfig);
 
         ImGui_ImplMetal_Init(_device);
 
@@ -324,39 +352,27 @@ void EndGroupPanel()
         {
             auto flavors = colors->flavors;
 
-/*
-     ImGuiColorEditFlags_None            = 0,
-    ImGuiColorEditFlags_NoAlpha         = 1 << 1,   //              // ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer).
-    ImGuiColorEditFlags_NoPicker        = 1 << 2,   //              // ColorEdit: disable picker when clicking on colored square.
-    ImGuiColorEditFlags_NoOptions       = 1 << 3,   //              // ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.
-    ImGuiColorEditFlags_NoSmallPreview  = 1 << 4,   //              // ColorEdit, ColorPicker: disable colored square preview next to the inputs. (e.g. to show only the inputs)
-    ImGuiColorEditFlags_NoInputs        = 1 << 5,   //              // ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview colored square).
-    ImGuiColorEditFlags_NoTooltip       = 1 << 6,   //              // ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview.
-    ImGuiColorEditFlags_NoLabel         = 1 << 7,   //              // ColorEdit, ColorPicker: disable display of inline text label (the label is still forwarded to the tooltip and picker).
-    ImGuiColorEditFlags_NoSidePreview   = 1 << 8,   //              // ColorPicker: disable bigger color preview on right side of the picker, use small colored square preview instead.
-    ImGuiColorEditFlags_NoDragDrop      = 1 << 9,   //              // ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source.
-
-    // User Options (right-click on widget to change some of them).
-    ImGuiColorEditFlags_AlphaBar        = 1 << 16,  //              // ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker.
-    ImGuiColorEditFlags_AlphaPreview    = 1 << 17,  //              // ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque.
-    ImGuiColorEditFlags_AlphaPreviewHalf= 1 << 18,  //              // ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard, instead of opaque.
-    ImGuiColorEditFlags_HDR             = 1 << 19,  //              // (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use ImGuiColorEditFlags_Float flag as well).
-    ImGuiColorEditFlags_DisplayRGB      = 1 << 20,  // [Display]    // ColorEdit: override _display_ type among RGB/HSV/Hex. ColorPicker: select any combination using one or more of RGB/HSV/Hex.
-    ImGuiColorEditFlags_DisplayHSV      = 1 << 21,  // [Display]    // "
-    ImGuiColorEditFlags_DisplayHex      = 1 << 22,  // [Display]    // "
-    ImGuiColorEditFlags_Uint8           = 1 << 23,  // [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.
-    ImGuiColorEditFlags_Float           = 1 << 24,  // [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers. No round-trip of value via integers.
-    ImGuiColorEditFlags_PickerHueBar    = 1 << 25,  // [Picker]     // ColorPicker: bar for Hue, rectangle for Sat/Value.
-    ImGuiColorEditFlags_PickerHueWheel  = 1 << 26,  // [Picker]     // ColorPicker: wheel for Hue, triangle for Sat/Value.
-    ImGuiColorEditFlags_InputRGB        = 1 << 27,  // [Input]      // ColorEdit, ColorPicker: input and output data in RGB format.
-    ImGuiColorEditFlags_InputHSV        = 1 << 28,  // [Input]      // ColorEdit, ColorPicker: input and output data in HSV format.
- */
-
             ImGuiColorEditFlags colorDisplayFlags = 0;
             colorDisplayFlags |= ImGuiColorEditFlags_AlphaPreviewHalf;
             colorDisplayFlags |= ImGuiColorEditFlags_DisplayRGB;
             colorDisplayFlags |= ImGuiColorEditFlags_DisplayHex;
             colorDisplayFlags |= ImGuiColorEditFlags_DisplayHSV;
+
+            static bool alpha_preview = true;
+            static bool alpha_half_preview = false;
+            static bool drag_and_drop = true;
+            static bool options_menu = true;
+            static bool hdr = false;
+
+//            ImGui::Checkbox("With Alpha Preview", &alpha_preview);
+//            ImGui::Checkbox("With Half Alpha Preview", &alpha_half_preview);
+//            ImGui::Checkbox("With Drag and Drop", &drag_and_drop);
+//            ImGui::Checkbox("With Options Menu", &options_menu);
+//            ImGui::SameLine();
+//            HelpMarker("Right-click on the individual color widget to show options.");
+//            ImGui::Checkbox("With HDR", &hdr);
+//            ImGui::SameLine();
+//            HelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.");
 
             for (auto &flavor : *flavors)
             {
@@ -378,6 +394,9 @@ void EndGroupPanel()
 //                        ImGui::ColorPicker4(colorName, color, colorDisplayFlags);
 
                         DetailsColorButton(colorName, color, colorDisplayFlags);
+//                        ImGui::SetNextWindowSize(ImVec2(70,70));
+//                        ImGuiColorEditFlags misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
+//                        ImGui::ColorEdit4(colorName, color, ImGuiColorEditFlags_DisplayHSV | misc_flags);
 //                        ImGui::SameLine();
 //                        ImGui::Text(colorName);
                     }
