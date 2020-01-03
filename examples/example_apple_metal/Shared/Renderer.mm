@@ -32,10 +32,109 @@ ImFont *bodyFont;
 ImFont *H1Font;
 
 void StyleColorsYouiLight();
-
 void DetailsColorButton(const char *name, float pDouble[4], ImGuiColorEditFlags flags);
+static void FlavorIdentifierDisplay(const std::string &flavorName);
 
-static void HelpMarker(const char *desc, const char *icon = "")
+static void FlavorIdentifierDisplay(const std::string &flavorName)
+{
+    // Orientation
+    if (flavorName.find("landscape") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_IMAGE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" Landscape");
+    }
+
+    if (flavorName.find("portrait") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_PORTRAIT);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" portrait");
+    }
+
+    // form factor
+    if (flavorName.find("tv") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_TV);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" tv");
+    }
+
+    if (flavorName.find("handset") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_MOBILE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" handset");
+    }
+
+    if (flavorName.find("tablet") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_TABLET);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" tablet");
+    }
+
+    // Density
+    if (flavorName.find("ldpi") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_EYE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" ldpi (~120dpi) (0.75x)");
+    }
+
+    if (flavorName.find("mdpi") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_EYE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" mdpi (~160dpi) (1.0x baseline)");
+    }
+
+    if (flavorName.find("hdpi") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_EYE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" hdpi (~240dpi) (1.5x)");
+    }
+    
+    if (flavorName.find("xhdpi") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_EYE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" xhdpi (~320dpi) (2.0x)");
+    }
+
+    if (flavorName.find("xxhdpi") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_EYE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" xxhdpi (~480dpi) (3.0x)");
+    }
+
+    if (flavorName.find("xxxhdpi") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_EYE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" xxxhdpi (~640dpi) (4.0x)");
+    }
+
+    if (flavorName.find("nodpi") != std::string::npos)
+    {
+        ImGui::Text(ICON_FA_EYE);
+        ImGui::SameLine();
+        ImGui::TextDisabled(" nodpi (density-independent/no scaling)");
+    }
+
+    /*
+        ldpi	Resources for low-density (ldpi) screens (~120dpi).
+        mdpi	Resources for medium-density (mdpi) screens (~160dpi). (This is the baseline density.)
+        hdpi	Resources for high-density (hdpi) screens (~240dpi).
+        xhdpi	Resources for extra-high-density (xhdpi) screens (~320dpi).
+        xxhdpi	Resources for extra-extra-high-density (xxhdpi) screens (~480dpi).
+        xxxhdpi	Resources for extra-extra-extra-high-density (xxxhdpi) uses (~640dpi).
+     */
+}
+
+static void DetailedColorTooltip(const char *desc, const char *icon = "?", const char *flavorName = "")
 {
     ImGui::PushFont(bodyFont);
 
@@ -51,7 +150,11 @@ static void HelpMarker(const char *desc, const char *icon = "")
     if (ImGui::IsItemHovered())
     {
         ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::PushFont(bodyFont);
+        FlavorIdentifierDisplay(std::string(flavorName));
+        ImGui::PopFont();
+        ImGui::Separator();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 150.0f);
         ImGui::TextWrapped(desc);
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
@@ -65,7 +168,7 @@ void BeginGroupPanel(const char *name, const ImVec2 &size = ImVec2(-1.0f, -1.0f)
     ImGui::BeginGroup();
     ImGui::TextUnformatted(name);
     ImGui::SameLine();
-    HelpMarker("Flavor additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE);
+    DetailedColorTooltip("Flavor additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, nullptr);
 
     auto itemSpacing = ImGui::GetStyle().ItemSpacing;
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
@@ -369,42 +472,36 @@ void EndGroupPanel()
 //            ImGui::Checkbox("With Drag and Drop", &drag_and_drop);
 //            ImGui::Checkbox("With Options Menu", &options_menu);
 //            ImGui::SameLine();
-//            HelpMarker("Right-click on the individual color widget to show options.");
+//            DetailedColorTooltip("Right-click on the individual color widget to show options.");
 //            ImGui::Checkbox("With HDR", &hdr);
 //            ImGui::SameLine();
-//            HelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.");
+//            DetailedColorTooltip("Currently all this does is to lift the 0..1 limits on dragging widgets.");
+
+//            ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImGui::ColorConvertFloat4ToU32(ImGui::GetStyle().Colors[ImGuiCol_PopupBg]));
+//            ImGui::PopStyleColor();
+//            ImGui::PopStyleVar();
 
             for (auto &flavor : *flavors)
             {
-                ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-                ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyle().Colors[ImGuiCol_ChildBg]);
                 ImGui::PushFont(H1Font);
-                BeginGroupPanel(flavor.name->c_str(), ImVec2(-1.0f, -1.0f));
+                ImGui::Text(flavor.name->c_str());
+                ImGui::SameLine();
+                DetailedColorTooltip("Flavor additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, flavor.name->c_str());
+                ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
+                ImGui::PopFont();
+
+                for (auto &colorSwatch : *flavor.flavor_colors)
                 {
-                    ImGui::PopFont();
+                    auto colorRGBA = *colorSwatch.color_rgba;
+                    auto colorName = colorSwatch.name->c_str();
+                    float color[] = {static_cast<float>(*colorRGBA.r), static_cast<float>(*colorRGBA.g), static_cast<float>(*colorRGBA.b), static_cast<float>(*colorRGBA.a)};
 
-                    for (auto &colorSwatch : *flavor.flavor_colors)
-                    {
-                        auto colorRGBA = *colorSwatch.color_rgba;
-                        auto colorName = colorSwatch.name->c_str();
-//                        json colorRGBA = *flavor.get["colorRGBA"];
-
-//                    ImVec4 *color = &colorSwatch["colorRGBA"];
-                        float color[] = {static_cast<float>(*colorRGBA.r), static_cast<float>(*colorRGBA.g), static_cast<float>(*colorRGBA.b), static_cast<float>(*colorRGBA.a)};
-//                        ImGui::ColorPicker4(colorName, color, colorDisplayFlags);
-
-                        DetailsColorButton(colorName, color, colorDisplayFlags);
-//                        ImGui::SetNextWindowSize(ImVec2(70,70));
-//                        ImGuiColorEditFlags misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
-//                        ImGui::ColorEdit4(colorName, color, ImGuiColorEditFlags_DisplayHSV | misc_flags);
-//                        ImGui::SameLine();
-//                        ImGui::Text(colorName);
-                    }
+                    DetailsColorButton(colorName, color, colorDisplayFlags);
                 }
-                EndGroupPanel();
-                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImGui::ColorConvertFloat4ToU32(ImGui::GetStyle().Colors[ImGuiCol_PopupBg]));
-                ImGui::PopStyleColor();
-                ImGui::PopStyleVar();
+                
+                ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
+                ImGui::Separator();
+                ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
             }
         }
         else

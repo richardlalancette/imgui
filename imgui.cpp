@@ -9842,7 +9842,7 @@ static void ImeSetInputScreenPosFn_DefaultImpl(int, int) {}
 //-----------------------------------------------------------------------------
 
 #ifndef IMGUI_DISABLE_METRICS_WINDOW
-// Avoid naming collision with imgui_demo.cpp's HelpMarker() for unity builds.
+// Avoid naming collision with imgui_demo.cpp's DetailedColorTooltip() for unity builds.
 static void MetricsHelpMarker(const char* desc)
 {
     ImGui::TextDisabled("(?)");
