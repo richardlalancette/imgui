@@ -26,7 +26,6 @@ using json = nlohmann::json;
 @property(nonatomic, strong) id <MTLCommandQueue> commandQueue;
 @end
 
-json designSystemJsonObject;
 Youi::DesignSystem designSystem;
 ImFont *bodyFont;
 ImFont *H1Font;
@@ -162,91 +161,6 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
     ImGui::PopFont();
 }
 
-// Not perfect... some clipping on the right side sometimes.
-void BeginGroupPanel(const char *name, const ImVec2 &size = ImVec2(-1.0f, -1.0f))
-{
-    ImGui::BeginGroup();
-    ImGui::TextUnformatted(name);
-    ImGui::SameLine();
-    DetailedColorTooltip("Flavor additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, nullptr);
-
-    auto itemSpacing = ImGui::GetStyle().ItemSpacing;
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-    auto frameHeight = ImGui::GetFrameHeight();
-    ImGui::BeginGroup();
-
-    ImVec2 effectiveSize = size;
-    if (size.x < 0.0f)
-    {
-        effectiveSize.x = ImGui::GetContentRegionAvailWidth();
-    }
-    else
-    {
-        effectiveSize.x = size.x;
-    }
-    ImGui::Dummy(ImVec2(effectiveSize.x, 0.0f));
-
-    ImGui::Dummy(ImVec2(frameHeight * 0.5f, 0.0f));
-    ImGui::SameLine(0.0f, 0.0f);
-    ImGui::BeginGroup();
-    ImGui::Dummy(ImVec2(frameHeight * 0.5f, 0.0f));
-    ImGui::SameLine(0.0f, 0.0f);
-//    ImGui::TextUnformatted(name);
-    ImGui::SameLine(0.0f, 0.0f);
-    ImGui::Dummy(ImVec2(0.0, frameHeight + itemSpacing.y));
-    ImGui::BeginGroup();
-
-    ImGui::PopStyleVar(1);
-
-    ImGui::GetCurrentWindow()->ContentRegionRect.Max.x -= frameHeight * 0.5f;
-    ImGui::GetCurrentWindow()->Size.x -= frameHeight;
-
-    ImGui::PushItemWidth(effectiveSize.x - frameHeight);
-}
-
-void EndGroupPanel()
-{
-    ImGui::PopItemWidth();
-
-    auto itemSpacing = ImGui::GetStyle().ItemSpacing;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-    auto frameHeight = ImGui::GetFrameHeight();
-
-    ImGui::EndGroup();
-
-    // Behind the elements only
-//    ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(0, 255, 0, 64), 4.0f);
-
-    ImGui::EndGroup();
-
-    ImGui::SameLine(0.0f, 0.0f);
-    ImGui::Dummy(ImVec2(frameHeight * 0.5f, 0.0f));
-    ImGui::Dummy(ImVec2(0.0, frameHeight - frameHeight * 0.5f - itemSpacing.y));
-
-    ImGui::EndGroup();
-
-    ImVec2 itemMin = ImGui::GetItemRectMin();
-    ImVec2 itemMax = ImGui::GetItemRectMax();
-//    ImGui::GetWindowDrawList()->AddRectFilled(itemMin, itemMax, IM_COL32(255, 255, 255, 240), 4.0f);
-    ImVec2 halfFrame = ImVec2(frameHeight * 0.25f * 0.5f, frameHeight * 0.5f);
-
-    // Behind Elements and fill parent
-//    ImGui::GetWindowDrawList()->AddRect(itemMin + halfFrame, itemMax - ImVec2(halfFrame.x, 0.0f), ImColor(ImGui::GetStyleColorVec4(ImGuiCol_Border)), halfFrame.x);
-
-    ImGui::PopStyleVar(2);
-
-    ImGui::GetCurrentWindow()->ContentRegionRect.Max.x += frameHeight * 0.5f;
-    ImGui::GetCurrentWindow()->Size.x += frameHeight;
-
-    ImGui::Dummy(ImVec2(0.0f, 0.0f));
-
-    ImGui::EndGroup();
-}
-
 @implementation Renderer
 
 - (nonnull instancetype)initWithView:(nonnull MTKView *)view;
@@ -259,7 +173,7 @@ void EndGroupPanel()
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        ImGui::StyleColorsLight();
+//        ImGui::StyleColorsLight();
         StyleColorsYouiLight();
 
         static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
@@ -269,11 +183,9 @@ void EndGroupPanel()
         ImFontConfig mainFontConfig;
         mainFontConfig.FontDataOwnedByAtlas = true;
         mainFontConfig.MergeMode = false;
-//        mainFontConfig.OversampleH = 3;
 
         auto currentApplicationFolder = std::string(getcwd(NULL, 0));
         
-//        std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto/Roboto-Regular.ttf";
         std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
         bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 18.0f, &mainFontConfig);
 
@@ -297,7 +209,6 @@ void EndGroupPanel()
         ImGui_ImplMetal_Init(_device);
 
         std::fstream designSystemJsonFile("/Users/richardlalancette/Desktop/DesignSystemV3.json");
-//        designSystemJsonFile >> designSystemJsonObject;
 
         designSystem = nlohmann::json::parse(designSystemJsonFile);
     }
@@ -392,8 +303,6 @@ void EndGroupPanel()
 {
     if (ImGui::BeginTabItem(ICON_FA_FIGHTER_JET " Motion"))
     {
-        auto motionSpec = designSystemJsonObject.find("motiondesign");
-
         ImGui::BeginTabBar("Design System!");
         {
             if (ImGui::BeginTabItem(" Macro"))
@@ -439,8 +348,6 @@ void EndGroupPanel()
 {
     if (ImGui::BeginTabItem(ICON_FA_FONT " Type"))
     {
-        auto typography = designSystemJsonObject.find("typography");
-
         ImGui::EndTabItem();
     }
 }
@@ -467,26 +374,13 @@ void EndGroupPanel()
             static bool options_menu = true;
             static bool hdr = false;
 
-//            ImGui::Checkbox("With Alpha Preview", &alpha_preview);
-//            ImGui::Checkbox("With Half Alpha Preview", &alpha_half_preview);
-//            ImGui::Checkbox("With Drag and Drop", &drag_and_drop);
-//            ImGui::Checkbox("With Options Menu", &options_menu);
-//            ImGui::SameLine();
-//            DetailedColorTooltip("Right-click on the individual color widget to show options.");
-//            ImGui::Checkbox("With HDR", &hdr);
-//            ImGui::SameLine();
-//            DetailedColorTooltip("Currently all this does is to lift the 0..1 limits on dragging widgets.");
-
-//            ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImGui::ColorConvertFloat4ToU32(ImGui::GetStyle().Colors[ImGuiCol_PopupBg]));
-//            ImGui::PopStyleColor();
-//            ImGui::PopStyleVar();
-
             for (auto &flavor : *flavors)
             {
                 ImGui::PushFont(H1Font);
                 ImGui::Text(flavor.name->c_str());
                 ImGui::SameLine();
-                DetailedColorTooltip("Flavor additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, flavor.name->c_str());
+
+                DetailedColorTooltip("Additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, flavor.name->c_str());
                 ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
                 ImGui::PopFont();
 
