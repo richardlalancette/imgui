@@ -36,6 +36,7 @@
 		83BBEA0820EB54E700295997 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0220EB54E700295997 /* imgui_demo.cpp */; };
 		83BBEA0920EB54E700295997 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0320EB54E700295997 /* imgui.cpp */; };
 		83BBEA0A20EB54E700295997 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0320EB54E700295997 /* imgui.cpp */; };
+		C500CA63A88B1923C71550FE /* ImguiWindowsFileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500C59FC0C129E89DDAA7A9 /* ImguiWindowsFileIO.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,6 +83,7 @@
 		C500C1DFF1F55DF924E95E28 /* Raleway-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-ExtraLight.ttf"; sourceTree = "<group>"; };
 		C500C20E7B30E6EBAADF5D77 /* SourceCodePro-SemiBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
 		C500C239502963D7FB637C50 /* Raleway-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-Bold.ttf"; sourceTree = "<group>"; };
+		C500C25DBB6147191FAEF386 /* ImguiWindowsFileIO.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ImguiWindowsFileIO.hpp; sourceTree = "<group>"; };
 		C500C27FAC1481B43410C7BE /* IBMPlexMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "IBMPlexMono-Bold.ttf"; sourceTree = "<group>"; };
 		C500C298ABEB2A323A5AEBB1 /* OFL.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		C500C2BCFD7680B863FE36E0 /* OFL.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 		C500C479D4AACC9F39F3ED2C /* designsystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = designsystem.h; sourceTree = "<group>"; };
 		C500C54878FF0D891BB01123 /* RobotoMono-MediumItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "RobotoMono-MediumItalic.ttf"; sourceTree = "<group>"; };
 		C500C59C769688AC85B3DCED /* SourceCodePro-BlackItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-BlackItalic.ttf"; sourceTree = "<group>"; };
+		C500C59FC0C129E89DDAA7A9 /* ImguiWindowsFileIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImguiWindowsFileIO.cpp; sourceTree = "<group>"; };
 		C500C5DCF57D94BC5E87CD5C /* CourierPrime-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "CourierPrime-Regular.ttf"; sourceTree = "<group>"; };
 		C500C5E9B2C63A2518ED6227 /* RobotoMono-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "RobotoMono-Thin.ttf"; sourceTree = "<group>"; };
 		C500C5FF4738A58ADA34886F /* Cousine-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Cousine-BoldItalic.ttf"; sourceTree = "<group>"; };
@@ -237,6 +240,8 @@
 				8307E7CA20E9F9C900473790 /* ViewController.h */,
 				8307E7CB20E9F9C900473790 /* ViewController.mm */,
 				8307E7E620E9F9C900473790 /* main.m */,
+				C500C59FC0C129E89DDAA7A9 /* ImguiWindowsFileIO.cpp */,
+				C500C25DBB6147191FAEF386 /* ImguiWindowsFileIO.hpp */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -704,6 +709,7 @@
 				83BBE9FF20EB54D800295997 /* imgui_impl_metal.mm in Sources */,
 				836D2A2E20EE208E0098E909 /* imgui_impl_osx.mm in Sources */,
 				8307E7DE20E9F9C900473790 /* AppDelegate.m in Sources */,
+				C500CA63A88B1923C71550FE /* ImguiWindowsFileIO.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

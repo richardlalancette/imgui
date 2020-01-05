@@ -4,7 +4,8 @@
 
 #include "imgui.h"
 #include "imgui_impl_metal.h"
-#import "picojson.h"
+#include "ImguiWindowsFileIO.hpp"
+
 
 // Cloud based design
 // https://assets.adobe.com/public/d608e206-7e47-43f4-5c1b-dacdcff45581
@@ -27,8 +28,17 @@ using json = nlohmann::json;
 @end
 
 Youi::DesignSystem designSystem;
-ImFont *bodyFont;
-ImFont *H1Font;
+ImFont *bodyFont = nullptr;
+ImFont *filebrowserFont = nullptr;
+ImFont *H1Font = nullptr;
+ImFont *H2Font = nullptr;
+id <MTLTexture> vidMetalTexture;
+id <MTLTexture> modMetalTexture;
+ImTextureID vidTextureID;
+ImTextureID modTextureID;
+bool bWindowBrowseFiles = false;
+bool bDesignSystemLoaded = false;
+std::vector<std::string> recently_used_files;
 
 void StyleColorsYouiLight();
 void DetailsColorButton(const char *name, float pDouble[4], ImGuiColorEditFlags flags);
@@ -163,6 +173,20 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
 
 @implementation Renderer
 
+- (id <MTLTexture>)loadTextureUsingMetalKit:(NSURL *)url device:(id <MTLDevice>)device
+{
+    MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
+
+    NSError *error;
+    id <MTLTexture> texture = [loader newTextureWithContentsOfURL:url options:nil error:&error];
+
+    if (!texture)
+    {
+        NSLog(@"Failed to create the texture from %@ due to %@", url.absoluteString, error.localizedDescription);
+    }
+    return texture;
+}
+
 - (nonnull instancetype)initWithView:(nonnull MTKView *)view;
 {
     self = [super init];
@@ -185,7 +209,7 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
         mainFontConfig.MergeMode = false;
 
         auto currentApplicationFolder = std::string(getcwd(NULL, 0));
-        
+
         std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
         bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 18.0f, &mainFontConfig);
 
@@ -198,19 +222,34 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
         std::string iconsFontPath = currentApplicationFolder + "/../../fonts/FontAwesome/fa-solid-900.ttf";
         io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 16.0f, &icons_config, icons_ranges);
 
+        std::string fileBrowserFont = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
+        filebrowserFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
+
         // Header 1 font
         ImFontConfig h1FontConfig;
         h1FontConfig.FontDataOwnedByAtlas = true;
         h1FontConfig.MergeMode = false;
         h1FontConfig.OversampleH = 3;
         std::string h1FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
-        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 24.0f, &h1FontConfig);
+        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 48.0f, &h1FontConfig);
+
+        // Header 2 font
+        ImFontConfig h2FontConfig;
+        h2FontConfig.FontDataOwnedByAtlas = true;
+        h2FontConfig.MergeMode = false;
+        h2FontConfig.OversampleH = 3;
+        std::string h2FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
+        H2Font = io.Fonts->AddFontFromFileTTF(h2FontPath.c_str(), 28.0f, &h1FontConfig);
 
         ImGui_ImplMetal_Init(_device);
 
-        std::fstream designSystemJsonFile("/Users/richardlalancette/Desktop/DesignSystemV3.json");
+        NSURL *url = [NSURL fileURLWithPath:@"/Users/richardlalancette/Desktop/images/vidsmall.png"];
+        vidMetalTexture = [self loadTextureUsingMetalKit:url device:_device];
+        vidTextureID = (__bridge void *)vidMetalTexture;
 
-        designSystem = nlohmann::json::parse(designSystemJsonFile);
+        NSURL *url2 = [NSURL fileURLWithPath:@"/Users/richardlalancette/Desktop/images/modsmall.png"];
+        modMetalTexture = [self loadTextureUsingMetalKit:url2 device:_device];
+        modTextureID = (__bridge void *) modMetalTexture;
     }
 
     return self;
@@ -251,39 +290,11 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
         ImGui_ImplOSX_NewFrame(view);
 #endif
         ImGui::NewFrame();
-        ImGui::PushFont(bodyFont);
 
-        ImGuiWindowFlags window_flags = 0;
-        static bool open = true;
-        window_flags |= ImGuiWindowFlags_NoTitleBar;
-        window_flags |= ImGuiWindowFlags_NoMove;
-        window_flags |= ImGuiWindowFlags_NoResize;
-        window_flags |= ImGuiWindowFlags_NoCollapse;
-        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
-
-//        static bool show_app_style_editor = true;
-//        ImGui::Begin("Style Editor", &show_app_style_editor);
-//        ImGui::ShowStyleEditor();
-//        ImGui::End();
 //        ImGui::ShowDemoWindow();
+        [self ShowNewWindow:io];
 
-        ImGui::Begin("Design System", &open, window_flags);
-        {
-            ImGui::BeginTabBar("Design System!");
-            {
-                [self UIDesignSystemInstructions];
-                [self UIColorPalette];
-                [self UITypography];
-                [self UIMotionDesign];
-            }
-            ImGui::EndTabBar();
-        }
-        ImGui::End();
 
-        ImGui::PopFont();
 
         // Rendering
         ImGui::Render();
@@ -299,10 +310,103 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
     [commandBuffer commit];
 }
 
+- (void)ShowNewWindow:(const ImGuiIO &)io
+{
+    ImGuiWindowFlags window_flags = 0;
+    static bool open = true;
+    window_flags |= ImGuiWindowFlags_NoTitleBar;
+    window_flags |= ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoResize;
+    window_flags |= ImGuiWindowFlags_NoCollapse;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::PushFont(bodyFont);
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
+
+    ImGui::Begin("Design System", &open, window_flags);
+    {
+        if (!bDesignSystemLoaded)
+        {
+
+            if (ImGui::Button("open file dialog"))
+            {
+                bWindowBrowseFiles = true;
+            }
+
+            if (bWindowBrowseFiles)
+            {
+                std::string open_file;
+
+                ImGui::PushFont(filebrowserFont);
+
+                if (fileIOWindow(open_file, recently_used_files, "Open", {"*.json", "*.*"}, true))
+                {
+                    bWindowBrowseFiles = false;
+
+                    if (!open_file.empty())
+                    {
+                        recently_used_files.push_back(open_file);
+                        std::fstream designSystemJsonFile(open_file);
+
+                        if (designSystemJsonFile.is_open())
+                        {
+                            try
+                            {
+                                bDesignSystemLoaded = true;
+                                designSystem = nlohmann::json::parse(designSystemJsonFile);
+                            }
+                            catch(json::parse_error)
+                            {
+                                bDesignSystemLoaded = false;
+
+                                ImGui::OpenPopup("Error Parsing");
+                            }
+                        }
+                    }
+                }
+                ImGui::PopFont();
+            }
+
+            [self ShowParsingErrorDialog];
+        }
+
+        if (bDesignSystemLoaded)
+        {
+            ImGui::BeginTabBar("Design System!");
+            {
+                [self UIDesignSystemInstructions];
+                [self UIColorPalette];
+                [self UITypography];
+                [self UIMotionDesign];
+            }
+            ImGui::EndTabBar();
+        }
+    }
+    ImGui::End();
+    ImGui::PopFont();
+}
+
+- (void)ShowParsingErrorDialog
+{
+    if (ImGui::BeginPopupModal("Error Parsing", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Enable to load the design system file. Ensure that it is the appropriate version.\n\n");
+        ImGui::Separator();
+
+        if (ImGui::Button("OK", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
 - (void)UIMotionDesign
 {
     if (ImGui::BeginTabItem(ICON_FA_FIGHTER_JET " Motion"))
     {
+        [self TabPageHeader:"Motion" texture:(modTextureID)];
+
         ImGui::BeginTabBar("Design System!");
         {
             if (ImGui::BeginTabItem(" Macro"))
@@ -348,6 +452,7 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
 {
     if (ImGui::BeginTabItem(ICON_FA_FONT " Type"))
     {
+        [self TabPageHeader:"Typography" texture:(vidTextureID)];
         ImGui::EndTabItem();
     }
 }
@@ -356,6 +461,8 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
 {
     if (ImGui::BeginTabItem(ICON_FA_TINT " Colors"))
     {
+        [self TabPageHeader:"Colors" texture:(vidTextureID)];
+
         auto colors = designSystem.colors;
 
         if (colors != nullptr)
@@ -376,11 +483,12 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
 
             for (auto &flavor : *flavors)
             {
-                ImGui::PushFont(H1Font);
-                ImGui::Text(flavor.name->c_str());
+                DetailedColorTooltip("Additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, flavor.name->c_str());
                 ImGui::SameLine();
 
-                DetailedColorTooltip("Additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, flavor.name->c_str());
+                ImGui::PushFont(H2Font);
+                ImGui::TextWrapped(flavor.name->c_str());
+
                 ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
                 ImGui::PopFont();
 
@@ -392,7 +500,7 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
 
                     DetailsColorButton(colorName, color, colorDisplayFlags);
                 }
-                
+
                 ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
                 ImGui::Separator();
                 ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
@@ -400,7 +508,7 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
         }
         else
         {
-            ImGui::PushFont(H1Font);
+            ImGui::PushFont(H2Font);
             ImGui::TextWrapped("No colors found in the design system.", "");
             ImGui::PopFont();
         }
@@ -408,16 +516,34 @@ static void DetailedColorTooltip(const char *desc, const char *icon = "?", const
     }
 }
 
+- (void)TabPageHeader:(const char[256])title texture:(ImTextureID)textureID
+{
+    ImVec2 currentPosition = ImGui::GetCursorPos();
+    ImGui::Image(textureID, ImVec2(675, 51), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1.0f, 1.0f, 1.0f, 0.85f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::SetCursorPos(currentPosition);
+
+    ImGui::PushFont(H1Font);
+    const ImVec4 &white = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    ImGui::Indent(ImGui::GetStyle().IndentSpacing);
+    ImGui::TextColored(white, title);
+    ImGui::Unindent();
+    ImGui::PopFont();
+    ImGui::Dummy(ImVec2(ImGui::GetStyle().IndentSpacing, ImGui::GetStyle().IndentSpacing));
+}
+
 - (void)UIDesignSystemInstructions
 {
     if (ImGui::BeginTabItem(ICON_FA_PENCIL_RULER " Design"))
     {
+        [self TabPageHeader:"Design System" texture:(vidTextureID)];
+
         auto ds = designSystem.instructions;
         ImGui::TextWrapped("Format: %s", ds->design_system_format->c_str());
         ImGui::Separator();
         for (const auto &m : *ds->metadata)
         {
             ImGui::TextWrapped("%s", m.c_str());
+            ImGui::Separator();
         }
 
         ImGui::EndTabItem();
@@ -461,8 +587,8 @@ void StyleColorsYouiLight()
 {
     ImGuiStyle &style = ImGui::GetStyle();
 
-    style.WindowPadding.x = 5;
-    style.WindowPadding.y = 5;
+    style.WindowPadding.x = 10;
+    style.WindowPadding.y = 10;
     style.FramePadding.x = 5;
     style.FramePadding.y = 5;
     style.ItemSpacing.x = 5;
