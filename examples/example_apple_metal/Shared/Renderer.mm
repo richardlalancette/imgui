@@ -54,9 +54,11 @@ void UITypography();
 void UIMotion();
 void UISettings();
 void DetailedColorTooltip(const char *desc, const char *icon = "?", const char *flavorName = "");
+void ShowParsingErrorDialog();
 
 void TabBar(bool b);
 void YouiSimpleTooltip(const std::string &tooltipText);
+void AddLinkedSolid(float color[4]);
 @implementation Renderer
 
 - (id <MTLTexture>)loadTextureUsingMetalKit:(NSURL *)url device:(id <MTLDevice>)device
@@ -215,6 +217,8 @@ void UIColor()
 
                 ImGuiColorEditFlags colorDisplayFlags = 0;
                 colorDisplayFlags |= ImGuiColorEditFlags_NoPicker;
+                colorDisplayFlags |= ImGuiColorEditFlags_AlphaPreviewHalf;
+                colorDisplayFlags |= ImGuiColorEditFlags_NoDragDrop;
 
                 // Show only the first flavor
                 auto flavor = (*flavors)[0];
@@ -243,7 +247,10 @@ void UIColor()
                         std::string refCount = std::to_string(hash1 % 6);
                         ImGui::Text(refCount.c_str(), "");
                         ImGui::SameLine();
-                        ImGui::ColorButton(colorName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f));
+                        if (ImGui::ColorButton(colorName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
+                        {
+                            AddLinkedSolid(color);
+                        }
                         ImGui::SameLine();
                         ImGui::TextWrapped(colorName);
                         //DetailsColorButton(colorName, color, colorDisplayFlags);
@@ -265,6 +272,116 @@ void UIColor()
         ImGui::EndChild();
         ImGui::EndTabItem();
     }
+}
+
+void AddLinkedSolid(float color[4])
+{
+    /*  
+    function makeColorEntry(name, color)
+    {
+        var params = new Object;
+        params.color = color;
+        params.color[0] = parseFloat(params.color[0]) / 255.0;
+        params.color[1] = parseFloat(params.color[1]) / 255.0;
+        params.color[2] = parseFloat(params.color[2]) / 255.0;
+        params.name = name;
+
+        app.beginUndoGroup("create palette entry");
+
+        // find current palette
+        var myComp = null;
+        for (var i = 1; i <= app.project.numItems; i ++) {
+            if ((app.project.item(i) instanceof CompItem) && (app.project.item(i).name === 'Color Palette'))
+            {
+                myComp = app.project.item(i);
+                break;
+            }
+        }
+
+        // create if not existing
+        if (myComp == null)
+            return;
+
+        // create
+        var effect1 = myComp.layer(1).Effects.addProperty("ADBE Fill")
+        effect1("Color").setValue(params.color);
+        effect1.name = params.name;
+
+        app.endUndoGroup();
+
+    }
+
+     function setupPalette()
+        {
+            app.beginUndoGroup("create style dictionary");
+
+            // find current comp, if any
+            var myComp = null;
+            for (var i = 1; i <= app.project.numItems; i ++) {
+                if ((app.project.item(i) instanceof CompItem) && (app.project.item(i).name === 'Color Palette'))
+                {
+                    myComp = app.project.item(i);
+
+                    // clear it out
+                    for(var i = myComp.numLayers; i > 0; i--)
+                    {
+                        myComp.layer(i).remove();
+                    }
+                    break;
+                }
+            }
+
+            // create if not existing
+            if (myComp == null)
+                myComp=app.project.items.addComp("Color Palette", 720, 576, 1, 1, 25)
+
+            // create shapes container
+            var shapeLayer = myComp.layers.addShape();
+            shapeLayer.name = "Color Palette"
+
+            app.endUndoGroup();
+        }
+     */
+
+    // 1) make a fill effect on selected layer
+    // 2) link color for fill to palette
+
+    /*  function makeLink(key)
+        {
+            var linkExpression = "palette = comp(\"Color Palette\"); \
+                        try{ palette.layer(1).effect(\"" + key + "\").param(\"Color\");\
+                        }catch(e){ value; }";
+
+            var myLayers = app.project.activeItem.selectedLayers;
+            if (myLayers.length == 0)
+                return;
+
+            var layer = myLayers[0];
+
+            if (isSolid(layer))
+            {
+                // make a fill effect, then link via expressions
+                // look for existing fill link
+                var effect1 = null;
+                for(var i=1;i<=layer.effect.numProperties;i++)
+                {
+                    var curFx = layer.effect(i);
+                    if (curFx.name == "colorlink")
+                    {
+                        effect1 = curFx;
+                        break;
+                    }
+                }
+
+                if (effect1 == null)
+                {
+                    effect1 = layer.Effects.addProperty("ADBE Fill")
+                    effect1.name = "colorlink";
+                }
+                effect1("Color").expression = linkExpression;
+            }
+        }
+     */
 }
 
 void UITypography()
@@ -628,7 +745,7 @@ void TabBar(bool bDesignSystemLoaded)
 //            ShowParsingErrorDialog();
 //        }
 
-    if (ImGui::Button(ICON_FA_FOLDER))
+    if (ImGui::Button(ICON_FA_FOLDER_OPEN))
     {
         TryToOpenDesignSystem("/Users/richardlalancette/Desktop/DesignSystemV3.json");
     }
@@ -637,7 +754,12 @@ void TabBar(bool bDesignSystemLoaded)
     if (bDesignSystemLoaded)
     {
         ImGui::SameLine();
-        ImGui::Button(ICON_FA_SYNC);
+
+        if (ImGui::Button(ICON_FA_SYNC))
+        {
+            TryToOpenDesignSystem("/Users/richardlalancette/Desktop/DesignSystemV3.json");
+        }
+
         YouiSimpleTooltip("Reload design system file.");
         ImGui::SameLine();
 
@@ -660,6 +782,7 @@ void TabBar(bool bDesignSystemLoaded)
                     ImGui::SetItemDefaultFocus();
                 }
             }
+            
             ImGui::EndCombo();
         }
     }
