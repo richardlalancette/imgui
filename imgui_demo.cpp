@@ -121,8 +121,6 @@ Index of this file:
 //-----------------------------------------------------------------------------
 // [SECTION] Forward Declarations, Helpers
 //-----------------------------------------------------------------------------
-#include "picojson.h"
-
 #if !defined(IMGUI_DISABLE_DEMO_WINDOWS)
 
 // Forward Declarations

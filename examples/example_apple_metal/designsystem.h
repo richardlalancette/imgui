@@ -81,6 +81,7 @@ namespace Youi
     struct FlavorColor
     {
         std::shared_ptr<ColorRgba> color_rgba;
+        std::shared_ptr<std::vector<std::string>> metadata;
         std::shared_ptr<std::string> name;
     };
 
@@ -214,6 +215,7 @@ namespace nlohmann
     inline void from_json(const json &j, Youi::FlavorColor &x)
     {
         x.color_rgba = Youi::get_optional<Youi::ColorRgba>(j, "colorRGBA");
+        x.metadata = Youi::get_optional<std::vector<std::string>>(j, "metadata");
         x.name = Youi::get_optional<std::string>(j, "name");
     }
 
@@ -221,6 +223,7 @@ namespace nlohmann
     {
         j = json::object();
         j["colorRGBA"] = x.color_rgba;
+        j["metadata"] = x.metadata;
         j["name"] = x.name;
     }
 
