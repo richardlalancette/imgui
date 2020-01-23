@@ -32,6 +32,7 @@ ImFont *bodyFont = nullptr;
 ImFont *filebrowserFont = nullptr;
 ImFont *H1Font = nullptr;
 ImFont *H2Font = nullptr;
+
 id <MTLTexture> vidMetalTexture;
 id <MTLTexture> modMetalTexture;
 ImTextureID vidTextureID;
@@ -41,168 +42,128 @@ bool bDesignSystemLoaded = false;
 std::vector<std::string> recently_used_files;
 const char *fakeFlavors[] = {"Default", "JVR"};
 
-void StyleColorsYouiLight();
-void StyleColorsYouiDark();
 void DetailsColorButton(const char *name, float pDouble[4], ImGuiColorEditFlags flags);
 void FlavorIdentifierDisplay(const std::string &flavorName);
 void DisplayNotes(std::shared_ptr<std::vector<std::string>> notes);
-void ShowYouiAEPanel();
 void TryToOpenDesignSystem(const std::string &designSystemFilename);
 void TabPageHeader(const std::string &string, ImTextureID textureId);
-void UIColor();
-void UITypography();
-void UIMotion();
-void UISettings();
 void DetailedColorTooltip(const char *desc, const char *icon = "?", const char *flavorName = "");
-void ShowParsingErrorDialog();
-
 void TabBar(bool b);
 void YouiSimpleTooltip(const std::string &tooltipText);
-void AddLinkedSolid(float color[4]);
-@implementation Renderer
 
-- (id <MTLTexture>)loadTextureUsingMetalKit:(NSURL *)url device:(id <MTLDevice>)device
+class YouiGui
 {
-    MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
+public:
+    std::map<std::string, ImFont *> userFonts;
 
-    NSError *error;
-    id <MTLTexture> texture = [loader newTextureWithContentsOfURL:url options:nil error:&error];
-
-    if (!texture)
+    struct YouiGuiDataModel
     {
-        NSLog(@"Failed to create the texture from %@ due to %@", url.absoluteString, error.localizedDescription);
-    }
-    return texture;
+        struct
+        {
+        } visibility;
+
+        struct
+        {
+            bool visible = true;
+            bool ColorsTabVisible = true;
+            bool TypographyTabVisible = true;
+            bool MotionTabVisible = true;
+            bool SettingsTabVisible = true;
+            bool DesignTabVisible = true;
+        } mainAEPanel;
+
+        struct
+        {
+            bool visible;
+        } demoWindow;
+    } m_youiGuiDataModel;
+
+public:
+    void Render();
+    void RenderMainAEPanel(bool *open);
+    void RenderColorTab(bool *open);
+    void RenderTypographyTab(bool *open);
+    void RenderMotionTab(bool *open);
+    void RenderSettingsTab(bool *open);
+    void RenderDesignSystemInstructionsTab(bool *open);
+    void RenderEmptyDesignSystemTab();
+
+    void CommandAddLinkedSolid(float *color);
+
+    void SetYouiLightTheme();
+    void SetYouiDarkTheme();
+
+    /*
+     * All font added this way is owned by the atlas.
+     */
+    ImFont *LoadUserFont(const std::string &fontName, const std::string &path);
+
+    /*
+     * All font added this way is owned by the atlas.
+     */
+    ImFont *LoadUserFont(const std::string &fontName, const std::string &path, const ImFontConfig &fontConfig);
+};
+
+void YouiGui::Render()
+{
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow(&m_youiGuiDataModel.demoWindow.visible);
+    RenderMainAEPanel(&m_youiGuiDataModel.mainAEPanel.visible);
+    ImGui::Render();
 }
 
-- (void)drawInMTKView:(MTKView *)view
+void YouiGui::RenderMainAEPanel(bool *open)
 {
-    ImGuiIO &io = ImGui::GetIO();
-    io.DisplaySize.x = view.bounds.size.width;
-    io.DisplaySize.y = view.bounds.size.height;
-
-#if TARGET_OS_OSX
-    CGFloat framebufferScale = view.window.screen.backingScaleFactor ? : NSScreen.mainScreen.backingScaleFactor;
-#else
-    CGFloat framebufferScale = view.window.screen.scale ?: UIScreen.mainScreen.scale;
-#endif
-    io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
-    io.DeltaTime = 1 / float(view.preferredFramesPerSecond ? : 60);
-
-    id <MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
-
-    static float clear_color[4] = {0.28f, 0.36f, 0.5f, 1.0f};
-
-    MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
-    if (renderPassDescriptor != nil)
+    if (!*open)
     {
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
-
-        // Here, you could do additional rendering work, including other passes as necessary.
-
-        id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-        [renderEncoder pushDebugGroup:@"ImGui demo"];
-
-        // Start the Dear ImGui frame
-        ImGui_ImplMetal_NewFrame(renderPassDescriptor);
-
-#if TARGET_OS_OSX
-        ImGui_ImplOSX_NewFrame(view);
-#endif
-        ImGui::NewFrame();
-
-        ImGui::ShowDemoWindow();
-
-        ShowYouiAEPanel();
-
-        // Rendering
-        ImGui::Render();
-        ImDrawData *drawData = ImGui::GetDrawData();
-        ImGui_ImplMetal_RenderDrawData(drawData, commandBuffer, renderEncoder);
-
-        [renderEncoder popDebugGroup];
-        [renderEncoder endEncoding];
-
-        [commandBuffer presentDrawable:view.currentDrawable];
-    }
-
-    [commandBuffer commit];
-}
-
-- (nonnull instancetype)initWithView:(nonnull MTKView *)view;
-{
-    self = [super init];
-    if (self)
-    {
-        _device = view.device;
-        _commandQueue = [_device newCommandQueue];
-
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        StyleColorsYouiLight();
-
-        static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-        ImGuiIO &io = ImGui::GetIO();
-        io.Fonts->AddFontDefault();
-
-        ImFontConfig mainFontConfig;
-        mainFontConfig.FontDataOwnedByAtlas = true;
-        mainFontConfig.MergeMode = false;
-
-        auto currentApplicationFolder = std::string(getcwd(NULL, 0));
-
-        std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
-        bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 18.0f, &mainFontConfig);
-
-        ImFontConfig icons_config;
-        icons_config.PixelSnapH = true;
-        icons_config.MergeMode = true;
-        icons_config.OversampleH = 3;
-
-        // Merge this font with the default font for now.
-        std::string iconsFontPath = currentApplicationFolder + "/../../fonts/FontAwesome/fa-solid-900.ttf";
-        io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 16.0f, &icons_config, icons_ranges);
-
-        std::string fileBrowserFont = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
-        filebrowserFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
-
-        // Header 1 font
-        ImFontConfig h1FontConfig;
-        h1FontConfig.FontDataOwnedByAtlas = true;
-        h1FontConfig.MergeMode = false;
-        h1FontConfig.OversampleH = 3;
-        std::string h1FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
-        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 48.0f, &h1FontConfig);
-
-        // Header 2 font
-        ImFontConfig h2FontConfig;
-        h2FontConfig.FontDataOwnedByAtlas = true;
-        h2FontConfig.MergeMode = false;
-        h2FontConfig.OversampleH = 3;
-        std::string h2FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
-        H2Font = io.Fonts->AddFontFromFileTTF(h2FontPath.c_str(), 28.0f, &h1FontConfig);
-
-        ImGui_ImplMetal_Init(_device);
-
-        NSURL *url = [NSURL fileURLWithPath:@"/Users/richardlalancette/Desktop/images/vidsmall.png"];
-        vidMetalTexture = [self loadTextureUsingMetalKit:url device:_device];
-        vidTextureID = (__bridge void *) vidMetalTexture;
-
-        NSURL *url2 = [NSURL fileURLWithPath:@"/Users/richardlalancette/Desktop/images/modsmall.png"];
-        modMetalTexture = [self loadTextureUsingMetalKit:url2 device:_device];
-        modTextureID = (__bridge void *) modMetalTexture;
+        return;
     }
 
-    return self;
+    ImGui::PushFont(bodyFont);
+
+    ImGuiWindowFlags window_flags = 0;
+//    window_flags |= ImGuiWindowFlags_NoTitleBar;
+//    window_flags |= ImGuiWindowFlags_NoMove;
+//    window_flags |= ImGuiWindowFlags_NoResize;
+//    window_flags |= ImGuiWindowFlags_NoCollapse;
+//    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+//    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+//    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
+
+    ImGui::Begin("Design System", open, window_flags);
+    {
+        TabBar(bDesignSystemLoaded);
+
+        if (bDesignSystemLoaded)
+        {
+            ImGui::BeginTabBar("Design System!");
+            {
+                RenderColorTab(&m_youiGuiDataModel.mainAEPanel.ColorsTabVisible);
+                RenderTypographyTab(&m_youiGuiDataModel.mainAEPanel.TypographyTabVisible);
+                RenderMotionTab(&m_youiGuiDataModel.mainAEPanel.MotionTabVisible);
+                RenderSettingsTab(&m_youiGuiDataModel.mainAEPanel.SettingsTabVisible);
+                RenderDesignSystemInstructionsTab(&m_youiGuiDataModel.mainAEPanel.DesignTabVisible);
+            }
+            ImGui::EndTabBar();
+        }
+        else
+        {
+            RenderEmptyDesignSystemTab();
+        }
+    }
+
+    ImGui::End();
+
+    ImGui::PopFont();
 }
 
-- (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size
+void YouiGui::RenderColorTab(bool *open)
 {
-}
-@end
+    if (!*open)
+    {
+        return;
+    }
 
-void UIColor()
-{
     if (ImGui::BeginTabItem(ICON_FA_TINT " Colors"))
     {
 //        TabPageHeader("Colors", vidTextureID);
@@ -247,10 +208,12 @@ void UIColor()
                         std::string refCount = std::to_string(hash1 % 6);
                         ImGui::Text(refCount.c_str(), "");
                         ImGui::SameLine();
+
                         if (ImGui::ColorButton(colorName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
                         {
-                            AddLinkedSolid(color);
+                            CommandAddLinkedSolid(color);
                         }
+
                         ImGui::SameLine();
                         ImGui::TextWrapped(colorName);
                         //DetailsColorButton(colorName, color, colorDisplayFlags);
@@ -274,9 +237,9 @@ void UIColor()
     }
 }
 
-void AddLinkedSolid(float color[4])
+void YouiGui::CommandAddLinkedSolid(float *color)
 {
-    /*  
+    /*
     function makeColorEntry(name, color)
     {
         var params = new Object;
@@ -384,8 +347,13 @@ void AddLinkedSolid(float color[4])
      */
 }
 
-void UITypography()
+void YouiGui::RenderTypographyTab(bool *open)
 {
+    if (!*open)
+    {
+        return;
+    }
+
     if (ImGui::BeginTabItem(ICON_FA_FONT " Type"))
     {
         TabPageHeader("Typography", vidTextureID);
@@ -394,8 +362,13 @@ void UITypography()
     }
 }
 
-void UIMotion()
+void YouiGui::RenderMotionTab(bool *open)
 {
+    if (!*open)
+    {
+        return;
+    }
+
     if (ImGui::BeginTabItem(ICON_FA_FIGHTER_JET " Motion"))
     {
         TabPageHeader("Motion", vidTextureID);
@@ -441,8 +414,13 @@ void UIMotion()
     }
 }
 
-void UISettings()
+void YouiGui::RenderSettingsTab(bool *open)
 {
+    if (!*open)
+    {
+        return;
+    }
+
     if (ImGui::BeginTabItem(ICON_FA_COGS " Settings"))
     {
         TabPageHeader("Settings", vidTextureID);
@@ -462,10 +440,13 @@ void UISettings()
                     ImGui::StyleColorsLight();
                     break;
                 case 3:
-                    StyleColorsYouiLight();
+                    SetYouiLightTheme();
                     break;
                 case 4:
-                    StyleColorsYouiDark();
+                    SetYouiDarkTheme();
+                    break;
+                default:
+                    ImGui::StyleColorsClassic();
                     break;
             }
         }
@@ -482,8 +463,13 @@ void UISettings()
     }
 }
 
-void UIDesignSystemInstructions()
+void YouiGui::RenderDesignSystemInstructionsTab(bool *open)
 {
+    if (!*open)
+    {
+        return;
+    }
+    
     if (ImGui::BeginTabItem(ICON_FA_PENCIL_RULER " Design"))
     {
         TabPageHeader("Design System", vidTextureID);
@@ -495,7 +481,7 @@ void UIDesignSystemInstructions()
             ImGui::Separator();
             for (const auto &m : *ds->metadata)
             {
-                ImGui::TextDisabled("%s", m.c_str());
+                ImGui::TextWrapped("%s", m.c_str());
                 ImGui::Separator();
             }
         }
@@ -504,7 +490,7 @@ void UIDesignSystemInstructions()
     }
 }
 
-void UIEmptyDesignSystem()
+void YouiGui::RenderEmptyDesignSystemTab()
 {
     ImGui::BeginChild("UIEmptyDesignSystem");
     ImGui::PushFont(H2Font);
@@ -516,6 +502,337 @@ void UIEmptyDesignSystem()
     ImGui::PopFont();
     ImGui::EndChild();
 }
+
+void YouiGui::SetYouiLightTheme()
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+
+    style.WindowPadding.x = 10;
+    style.WindowPadding.y = 10;
+    style.FramePadding.x = 5;
+    style.FramePadding.y = 5;
+    style.ItemSpacing.x = 5;
+    style.ItemSpacing.y = 5;
+    style.ItemInnerSpacing.x = 5;
+    style.ItemInnerSpacing.y = 5;
+    style.TouchExtraPadding.x = 0;
+    style.TouchExtraPadding.y = 0;
+    style.IndentSpacing = 20;
+    style.ScrollbarSize = 10;
+    style.GrabMinSize = 5;
+
+    style.WindowBorderSize = 0;
+    style.ChildBorderSize = 1;
+    style.PopupBorderSize = 1;
+    style.FrameBorderSize = 1;
+    style.TabBorderSize = 1;
+
+    style.WindowRounding = 2;
+    style.ChildRounding = 2;
+    style.FrameRounding = 2;
+    style.PopupRounding = 2;
+    style.ScrollbarRounding = 2;
+    style.GrabRounding = 2;
+    style.TabRounding = 2;
+
+    ImVec4 *colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_Text] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.93f, 0.93f, 0.93f, 1.00f);
+    colors[ImGuiCol_ChildBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_PopupBg] = ImVec4(0.97f, 0.97f, 0.97f, 0.98f);
+    colors[ImGuiCol_Border] = ImVec4(0.42f, 0.42f, 0.42f, 0.23f);
+    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.02f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.99f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.94f, 0.94f, 0.94f, 0.40f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.82f, 0.81f, 0.81f, 1.00f);
+    colors[ImGuiCol_TitleBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.96f, 0.96f, 0.96f, 1.00f);
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 1.00f, 1.00f, 0.92f);
+    colors[ImGuiCol_MenuBarBg] = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.96f, 0.96f, 0.96f, 0.53f);
+    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.80f, 0.79f, 0.79f, 0.80f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.65f, 0.08f, 0.27f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.80f, 0.79f, 0.79f, 0.80f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.58f, 0.58f, 0.58f, 1.00f);
+    colors[ImGuiCol_Button] = ImVec4(0.73f, 0.73f, 0.73f, 0.40f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.54f, 0.54f, 0.54f, 0.40f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
+    colors[ImGuiCol_Header] = ImVec4(0.81f, 0.81f, 0.81f, 0.31f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.74f, 0.74f, 0.74f, 0.80f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.66f, 0.66f, 0.66f, 1.00f);
+    colors[ImGuiCol_Separator] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
+    colors[ImGuiCol_SeparatorHovered] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
+    colors[ImGuiCol_SeparatorActive] = ImVec4(0.65f, 0.08f, 0.27f, 1.00f);
+    colors[ImGuiCol_ResizeGrip] = ImVec4(0.80f, 0.80f, 0.80f, 0.56f);
+    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
+    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.65f, 0.08f, 0.27f, 1.00f);
+    colors[ImGuiCol_Tab] = ImVec4(0.73f, 0.73f, 0.73f, 0.40f);
+    colors[ImGuiCol_TabHovered] = ImVec4(0.54f, 0.54f, 0.54f, 0.40f);
+    colors[ImGuiCol_TabActive] = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
+    colors[ImGuiCol_TabUnfocused] = ImVec4(0.92f, 0.93f, 0.94f, 0.99f);
+    colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.74f, 0.82f, 0.91f, 1.00f);
+    colors[ImGuiCol_PlotLines] = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+    colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.45f, 0.00f, 1.00f);
+    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+    colors[ImGuiCol_DragDropTarget] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+    colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.70f, 0.70f, 0.70f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+}
+
+void YouiGui::SetYouiDarkTheme()
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+
+    style.WindowPadding.x = 10;
+    style.WindowPadding.y = 10;
+    style.FramePadding.x = 5;
+    style.FramePadding.y = 5;
+    style.ItemSpacing.x = 5;
+    style.ItemSpacing.y = 5;
+    style.ItemInnerSpacing.x = 5;
+    style.ItemInnerSpacing.y = 5;
+    style.TouchExtraPadding.x = 0;
+    style.TouchExtraPadding.y = 0;
+    style.IndentSpacing = 20;
+    style.ScrollbarSize = 10;
+    style.GrabMinSize = 5;
+
+    style.WindowBorderSize = 0;
+    style.ChildBorderSize = 1;
+    style.PopupBorderSize = 1;
+    style.FrameBorderSize = 1;
+    style.TabBorderSize = 1;
+
+    style.WindowRounding = 2;
+    style.ChildRounding = 2;
+    style.FrameRounding = 2;
+    style.PopupRounding = 2;
+    style.ScrollbarRounding = 2;
+    style.GrabRounding = 2;
+    style.TabRounding = 2;
+
+    ImVec4 *colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+    colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.29f, 0.48f, 0.54f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.29f, 0.48f, 1.00f);
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
+    colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
+    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
+    colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
+    colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
+    colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
+    colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 0.25f);
+    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+    colors[ImGuiCol_Tab] = ImLerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.80f);
+    colors[ImGuiCol_TabHovered] = colors[ImGuiCol_HeaderHovered];
+    colors[ImGuiCol_TabActive] = ImLerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
+    colors[ImGuiCol_TabUnfocused] = ImLerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
+    colors[ImGuiCol_TabUnfocusedActive] = ImLerp(colors[ImGuiCol_TabActive], colors[ImGuiCol_TitleBg], 0.40f);
+    colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+    colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+    colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+    colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+}
+
+ImFont *YouiGui::LoadUserFont(const std::string &fontName, const std::string &path)
+{
+    ImFontConfig fontConfig;
+    fontConfig.FontDataOwnedByAtlas = true;
+    fontConfig.MergeMode = false;
+    fontConfig.OversampleH = 3;
+
+    return LoadUserFont(fontName, path, fontConfig);
+}
+
+ImFont *YouiGui::LoadUserFont(const std::string &fontName, const std::string &path, const ImFontConfig &fontConfig)
+{
+    auto fontIterator = userFonts.find(fontName);
+
+    if (fontIterator == userFonts.end())
+    {
+        ImFont *font = ImGui::GetIO().Fonts->AddFontFromFileTTF(path.c_str(), 48.0f, &fontConfig);
+
+        userFonts[fontName] = font;
+
+        return font;
+    }
+
+    return fontIterator->second;
+}
+
+YouiGui gYouiGui;
+
+@implementation Renderer
+
+- (id <MTLTexture>)loadTextureUsingMetalKit:(NSURL *)url device:(id <MTLDevice>)device
+{
+    MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
+
+    NSError *error;
+    id <MTLTexture> texture = [loader newTextureWithContentsOfURL:url options:nil error:&error];
+
+    if (!texture)
+    {
+        NSLog(@"Failed to create the texture from %@ due to %@", url.absoluteString, error.localizedDescription);
+    }
+    return texture;
+}
+
+- (void)drawInMTKView:(MTKView *)view
+{
+    ImGuiIO &io = ImGui::GetIO();
+    io.DisplaySize.x = view.bounds.size.width;
+    io.DisplaySize.y = view.bounds.size.height;
+
+#if TARGET_OS_OSX
+    CGFloat framebufferScale = view.window.screen.backingScaleFactor ? : NSScreen.mainScreen.backingScaleFactor;
+#else
+    CGFloat framebufferScale = view.window.screen.scale ?: UIScreen.mainScreen.scale;
+#endif
+    io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
+    io.DeltaTime = 1 / float(view.preferredFramesPerSecond ? : 60);
+
+    id <MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
+
+    static float clear_color[4] = {0.28f, 0.36f, 0.5f, 1.0f};
+
+    MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
+    if (renderPassDescriptor != nil)
+    {
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+
+        // Here, you could do additional rendering work, including other passes as necessary.
+
+        id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+        [renderEncoder pushDebugGroup:@"ImGui demo"];
+
+        // Start the Dear ImGui frame
+        ImGui_ImplMetal_NewFrame(renderPassDescriptor);
+
+#if TARGET_OS_OSX
+        ImGui_ImplOSX_NewFrame(view);
+#endif
+
+        gYouiGui.Render();
+
+        ImDrawData *drawData = ImGui::GetDrawData();
+        ImGui_ImplMetal_RenderDrawData(drawData, commandBuffer, renderEncoder);
+
+        [renderEncoder popDebugGroup];
+        [renderEncoder endEncoding];
+
+        [commandBuffer presentDrawable:view.currentDrawable];
+    }
+
+    [commandBuffer commit];
+}
+
+- (nonnull instancetype)initWithView:(nonnull MTKView *)view;
+{
+    self = [super init];
+    if (self)
+    {
+        _device = view.device;
+        _commandQueue = [_device newCommandQueue];
+
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        gYouiGui.SetYouiLightTheme();
+
+        static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+        ImGuiIO &io = ImGui::GetIO();
+        io.Fonts->AddFontDefault();
+
+        ImFontConfig mainFontConfig;
+        mainFontConfig.FontDataOwnedByAtlas = true;
+        mainFontConfig.MergeMode = false;
+
+        auto currentApplicationFolder = std::string(getcwd(NULL, 0));
+
+        std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
+        bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 18.0f, &mainFontConfig);
+
+        ImFontConfig icons_config;
+        icons_config.PixelSnapH = true;
+        icons_config.MergeMode = true;
+        icons_config.OversampleH = 3;
+
+        // Merge this font with the default font for now.
+        std::string iconsFontPath = currentApplicationFolder + "/../../fonts/FontAwesome/fa-solid-900.ttf";
+        io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 16.0f, &icons_config, icons_ranges);
+
+        std::string fileBrowserFont = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
+        filebrowserFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
+
+        // Header 1 font
+        ImFontConfig h1FontConfig;
+        h1FontConfig.FontDataOwnedByAtlas = true;
+        h1FontConfig.MergeMode = false;
+        h1FontConfig.OversampleH = 3;
+        std::string h1FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
+        H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 48.0f, &h1FontConfig);
+
+        // Header 2 font
+        ImFontConfig h2FontConfig;
+        h2FontConfig.FontDataOwnedByAtlas = true;
+        h2FontConfig.MergeMode = false;
+        h2FontConfig.OversampleH = 3;
+        std::string h2FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
+        H2Font = io.Fonts->AddFontFromFileTTF(h2FontPath.c_str(), 28.0f, &h1FontConfig);
+
+        ImGui_ImplMetal_Init(_device);
+
+        NSURL *url = [NSURL fileURLWithPath:@"/Users/richardlalancette/Desktop/images/vidsmall.png"];
+        vidMetalTexture = [self loadTextureUsingMetalKit:url device:_device];
+        vidTextureID = (__bridge void *) vidMetalTexture;
+
+        NSURL *url2 = [NSURL fileURLWithPath:@"/Users/richardlalancette/Desktop/images/modsmall.png"];
+        modMetalTexture = [self loadTextureUsingMetalKit:url2 device:_device];
+        modTextureID = (__bridge void *) modMetalTexture;
+    }
+
+    return self;
+}
+
+- (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size
+{
+}
+@end
 
 void DetailedColorTooltip(const char *desc, const char *icon, const char *flavorName)
 {
@@ -674,47 +991,6 @@ void TabPageHeader(const std::string &title, ImTextureID textureId)
     ImGui::PopFont();
 }
 
-void ShowYouiAEPanel()
-{
-    ImGuiWindowFlags window_flags = 0;
-    static bool open = true;
-//    window_flags |= ImGuiWindowFlags_NoTitleBar;
-//    window_flags |= ImGuiWindowFlags_NoMove;
-//    window_flags |= ImGuiWindowFlags_NoResize;
-//    window_flags |= ImGuiWindowFlags_NoCollapse;
-//    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-//    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-//    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
-
-    ImGui::PushFont(bodyFont);
-
-    ImGui::Begin("Design System", &open, window_flags);
-    {
-        TabBar(bDesignSystemLoaded);
-
-        if (bDesignSystemLoaded)
-        {
-            ImGui::BeginTabBar("Design System!");
-            {
-                UIColor();
-                UITypography();
-                UIMotion();
-                UISettings();
-                UIDesignSystemInstructions();
-            }
-            ImGui::EndTabBar();
-        }
-        else
-        {
-            UIEmptyDesignSystem();
-        }
-    }
-
-    ImGui::End();
-
-    ImGui::PopFont();
-}
-
 void TabBar(bool bDesignSystemLoaded)
 {
 //        if (!bDesignSystemLoaded)
@@ -782,7 +1058,7 @@ void TabBar(bool bDesignSystemLoaded)
                     ImGui::SetItemDefaultFocus();
                 }
             }
-            
+
             ImGui::EndCombo();
         }
     }
@@ -865,170 +1141,4 @@ void DetailsColorButton(const char *text, float col[4], ImGuiColorEditFlags flag
             ImGui::Text("H: %.3f, S: %.3f, V: %.3f, A: %.3f", col[0], col[1], col[2], col[3]);
         }
     }
-}
-
-void StyleColorsYouiLight()
-{
-    ImGuiStyle &style = ImGui::GetStyle();
-
-    style.WindowPadding.x = 10;
-    style.WindowPadding.y = 10;
-    style.FramePadding.x = 5;
-    style.FramePadding.y = 5;
-    style.ItemSpacing.x = 5;
-    style.ItemSpacing.y = 5;
-    style.ItemInnerSpacing.x = 5;
-    style.ItemInnerSpacing.y = 5;
-    style.TouchExtraPadding.x = 0;
-    style.TouchExtraPadding.y = 0;
-    style.IndentSpacing = 20;
-    style.ScrollbarSize = 10;
-    style.GrabMinSize = 5;
-
-    style.WindowBorderSize = 0;
-    style.ChildBorderSize = 1;
-    style.PopupBorderSize = 1;
-    style.FrameBorderSize = 1;
-    style.TabBorderSize = 1;
-
-    style.WindowRounding = 2;
-    style.ChildRounding = 2;
-    style.FrameRounding = 2;
-    style.PopupRounding = 2;
-    style.ScrollbarRounding = 2;
-    style.GrabRounding = 2;
-    style.TabRounding = 2;
-
-    ImVec4 *colors = ImGui::GetStyle().Colors;
-    colors[ImGuiCol_Text] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-    colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
-    colors[ImGuiCol_WindowBg] = ImVec4(0.93f, 0.93f, 0.93f, 1.00f);
-    colors[ImGuiCol_ChildBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_PopupBg] = ImVec4(0.97f, 0.97f, 0.97f, 0.98f);
-    colors[ImGuiCol_Border] = ImVec4(0.42f, 0.42f, 0.42f, 0.23f);
-    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.02f);
-    colors[ImGuiCol_FrameBg] = ImVec4(0.99f, 0.99f, 0.99f, 1.00f);
-    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.94f, 0.94f, 0.94f, 0.40f);
-    colors[ImGuiCol_FrameBgActive] = ImVec4(0.82f, 0.81f, 0.81f, 1.00f);
-    colors[ImGuiCol_TitleBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_TitleBgActive] = ImVec4(0.96f, 0.96f, 0.96f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 1.00f, 1.00f, 0.92f);
-    colors[ImGuiCol_MenuBarBg] = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
-    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.96f, 0.96f, 0.96f, 0.53f);
-    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.80f, 0.79f, 0.79f, 0.80f);
-    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.65f, 0.08f, 0.27f, 1.00f);
-    colors[ImGuiCol_CheckMark] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
-    colors[ImGuiCol_SliderGrab] = ImVec4(0.80f, 0.79f, 0.79f, 0.80f);
-    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.58f, 0.58f, 0.58f, 1.00f);
-    colors[ImGuiCol_Button] = ImVec4(0.73f, 0.73f, 0.73f, 0.40f);
-    colors[ImGuiCol_ButtonHovered] = ImVec4(0.54f, 0.54f, 0.54f, 0.40f);
-    colors[ImGuiCol_ButtonActive] = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
-    colors[ImGuiCol_Header] = ImVec4(0.81f, 0.81f, 0.81f, 0.31f);
-    colors[ImGuiCol_HeaderHovered] = ImVec4(0.74f, 0.74f, 0.74f, 0.80f);
-    colors[ImGuiCol_HeaderActive] = ImVec4(0.66f, 0.66f, 0.66f, 1.00f);
-    colors[ImGuiCol_Separator] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
-    colors[ImGuiCol_SeparatorHovered] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
-    colors[ImGuiCol_SeparatorActive] = ImVec4(0.65f, 0.08f, 0.27f, 1.00f);
-    colors[ImGuiCol_ResizeGrip] = ImVec4(0.80f, 0.80f, 0.80f, 0.56f);
-    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.85f, 0.11f, 0.36f, 1.00f);
-    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.65f, 0.08f, 0.27f, 1.00f);
-    colors[ImGuiCol_Tab] = ImVec4(0.73f, 0.73f, 0.73f, 0.40f);
-    colors[ImGuiCol_TabHovered] = ImVec4(0.54f, 0.54f, 0.54f, 0.40f);
-    colors[ImGuiCol_TabActive] = ImVec4(0.74f, 0.74f, 0.74f, 1.00f);
-    colors[ImGuiCol_TabUnfocused] = ImVec4(0.92f, 0.93f, 0.94f, 0.99f);
-    colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.74f, 0.82f, 0.91f, 1.00f);
-    colors[ImGuiCol_PlotLines] = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
-    colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-    colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-    colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.45f, 0.00f, 1.00f);
-    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
-    colors[ImGuiCol_DragDropTarget] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
-    colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.70f, 0.70f, 0.70f, 0.70f);
-    colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.20f);
-    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
-}
-
-void StyleColorsYouiDark()
-{
-    ImGuiStyle &style = ImGui::GetStyle();
-
-    style.WindowPadding.x = 10;
-    style.WindowPadding.y = 10;
-    style.FramePadding.x = 5;
-    style.FramePadding.y = 5;
-    style.ItemSpacing.x = 5;
-    style.ItemSpacing.y = 5;
-    style.ItemInnerSpacing.x = 5;
-    style.ItemInnerSpacing.y = 5;
-    style.TouchExtraPadding.x = 0;
-    style.TouchExtraPadding.y = 0;
-    style.IndentSpacing = 20;
-    style.ScrollbarSize = 10;
-    style.GrabMinSize = 5;
-
-    style.WindowBorderSize = 0;
-    style.ChildBorderSize = 1;
-    style.PopupBorderSize = 1;
-    style.FrameBorderSize = 1;
-    style.TabBorderSize = 1;
-
-    style.WindowRounding = 2;
-    style.ChildRounding = 2;
-    style.FrameRounding = 2;
-    style.PopupRounding = 2;
-    style.ScrollbarRounding = 2;
-    style.GrabRounding = 2;
-    style.TabRounding = 2;
-
-    ImVec4 *colors = ImGui::GetStyle().Colors;
-    colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
-    colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
-    colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
-    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.29f, 0.48f, 0.54f);
-    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-    colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-    colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
-    colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.29f, 0.48f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
-    colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
-    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
-    colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
-    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-    colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
-    colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
-    colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-    colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
-    colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
-    colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
-    colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 0.25f);
-    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
-    colors[ImGuiCol_Tab] = ImLerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.80f);
-    colors[ImGuiCol_TabHovered] = colors[ImGuiCol_HeaderHovered];
-    colors[ImGuiCol_TabActive] = ImLerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
-    colors[ImGuiCol_TabUnfocused] = ImLerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
-    colors[ImGuiCol_TabUnfocusedActive] = ImLerp(colors[ImGuiCol_TabActive], colors[ImGuiCol_TitleBg], 0.40f);
-    colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
-    colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-    colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-    colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
-    colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
-    colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
-    colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 }
