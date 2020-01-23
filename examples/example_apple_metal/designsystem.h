@@ -1,5 +1,6 @@
 //  To parse this JSON data, first install
 //
+//      Boost     http://www.boost.org
 //      json.hpp  https://github.com/nlohmann/json
 //
 //  Then include this file, and then do
@@ -36,7 +37,7 @@ namespace nlohmann
 }
 #endif
 
-namespace Youi
+namespace youi
 {
     using nlohmann::json;
 
@@ -70,7 +71,7 @@ namespace Youi
         return get_optional<T>(j, property.data());
     }
 
-    struct ColorRgba
+    struct FlavorColorColorRgba
     {
         std::shared_ptr<double> a;
         std::shared_ptr<double> b;
@@ -80,12 +81,11 @@ namespace Youi
 
     struct FlavorColor
     {
-        std::shared_ptr<ColorRgba> color_rgba;
-        std::shared_ptr<std::vector<std::string>> metadata;
+        std::shared_ptr<FlavorColorColorRgba> color_rgba;
         std::shared_ptr<std::string> name;
     };
 
-    struct Metadata
+    struct PurpleMetadata
     {
         std::shared_ptr<std::vector<std::string>> prop;
     };
@@ -93,7 +93,7 @@ namespace Youi
     struct ColorsFlavor
     {
         std::shared_ptr<std::vector<FlavorColor>> flavor_colors;
-        std::shared_ptr<Metadata> metadata;
+        std::shared_ptr<PurpleMetadata> metadata;
         std::shared_ptr<std::string> name;
     };
 
@@ -132,14 +132,32 @@ namespace Youi
         std::shared_ptr<std::vector<MotionFlavor>> flavors;
     };
 
+    struct FluffyMetadata
+    {
+        std::shared_ptr<std::vector<std::string>> prop;
+    };
+
+    struct TypographyStyleColorRgba
+    {
+        std::shared_ptr<double> a;
+        std::shared_ptr<double> b;
+        std::shared_ptr<double> g;
+        std::shared_ptr<double> r;
+    };
+
+    struct TypographyStyle
+    {
+        std::shared_ptr<TypographyStyleColorRgba> color_rgba;
+        std::shared_ptr<std::string> fontname;
+        std::shared_ptr<double> fontsize;
+        std::shared_ptr<std::string> name;
+    };
+
     struct TypographyFlavor
     {
-        std::shared_ptr<std::string> alignment;
-        std::shared_ptr<std::vector<double>> color;
-        std::shared_ptr<std::string> font;
+        std::shared_ptr<FluffyMetadata> metadata;
         std::shared_ptr<std::string> name;
-        std::shared_ptr<std::string> rem;
-        std::shared_ptr<double> size;
+        std::shared_ptr<std::vector<TypographyStyle>> typography_styles;
     };
 
     struct Typography
@@ -159,51 +177,60 @@ namespace Youi
 
 namespace nlohmann
 {
-    void from_json(const json &j, Youi::ColorRgba &x);
-    void to_json(json &j, const Youi::ColorRgba &x);
+    void from_json(const json &j, youi::FlavorColorColorRgba &x);
+    void to_json(json &j, const youi::FlavorColorColorRgba &x);
 
-    void from_json(const json &j, Youi::FlavorColor &x);
-    void to_json(json &j, const Youi::FlavorColor &x);
+    void from_json(const json &j, youi::FlavorColor &x);
+    void to_json(json &j, const youi::FlavorColor &x);
 
-    void from_json(const json &j, Youi::Metadata &x);
-    void to_json(json &j, const Youi::Metadata &x);
+    void from_json(const json &j, youi::PurpleMetadata &x);
+    void to_json(json &j, const youi::PurpleMetadata &x);
 
-    void from_json(const json &j, Youi::ColorsFlavor &x);
-    void to_json(json &j, const Youi::ColorsFlavor &x);
+    void from_json(const json &j, youi::ColorsFlavor &x);
+    void to_json(json &j, const youi::ColorsFlavor &x);
 
-    void from_json(const json &j, Youi::Colors &x);
-    void to_json(json &j, const Youi::Colors &x);
+    void from_json(const json &j, youi::Colors &x);
+    void to_json(json &j, const youi::Colors &x);
 
-    void from_json(const json &j, Youi::Instructions &x);
-    void to_json(json &j, const Youi::Instructions &x);
+    void from_json(const json &j, youi::Instructions &x);
+    void to_json(json &j, const youi::Instructions &x);
 
-    void from_json(const json &j, Youi::Curve &x);
-    void to_json(json &j, const Youi::Curve &x);
+    void from_json(const json &j, youi::Curve &x);
+    void to_json(json &j, const youi::Curve &x);
 
-    void from_json(const json &j, Youi::MotionFlavor &x);
-    void to_json(json &j, const Youi::MotionFlavor &x);
+    void from_json(const json &j, youi::MotionFlavor &x);
+    void to_json(json &j, const youi::MotionFlavor &x);
 
-    void from_json(const json &j, Youi::Motion &x);
-    void to_json(json &j, const Youi::Motion &x);
+    void from_json(const json &j, youi::Motion &x);
+    void to_json(json &j, const youi::Motion &x);
 
-    void from_json(const json &j, Youi::TypographyFlavor &x);
-    void to_json(json &j, const Youi::TypographyFlavor &x);
+    void from_json(const json &j, youi::FluffyMetadata &x);
+    void to_json(json &j, const youi::FluffyMetadata &x);
 
-    void from_json(const json &j, Youi::Typography &x);
-    void to_json(json &j, const Youi::Typography &x);
+    void from_json(const json &j, youi::TypographyStyleColorRgba &x);
+    void to_json(json &j, const youi::TypographyStyleColorRgba &x);
 
-    void from_json(const json &j, Youi::DesignSystem &x);
-    void to_json(json &j, const Youi::DesignSystem &x);
+    void from_json(const json &j, youi::TypographyStyle &x);
+    void to_json(json &j, const youi::TypographyStyle &x);
 
-    inline void from_json(const json &j, Youi::ColorRgba &x)
+    void from_json(const json &j, youi::TypographyFlavor &x);
+    void to_json(json &j, const youi::TypographyFlavor &x);
+
+    void from_json(const json &j, youi::Typography &x);
+    void to_json(json &j, const youi::Typography &x);
+
+    void from_json(const json &j, youi::DesignSystem &x);
+    void to_json(json &j, const youi::DesignSystem &x);
+
+    inline void from_json(const json &j, youi::FlavorColorColorRgba &x)
     {
-        x.a = Youi::get_optional<double>(j, "a");
-        x.b = Youi::get_optional<double>(j, "b");
-        x.g = Youi::get_optional<double>(j, "g");
-        x.r = Youi::get_optional<double>(j, "r");
+        x.a = youi::get_optional<double>(j, "a");
+        x.b = youi::get_optional<double>(j, "b");
+        x.g = youi::get_optional<double>(j, "g");
+        x.r = youi::get_optional<double>(j, "r");
     }
 
-    inline void to_json(json &j, const Youi::ColorRgba &x)
+    inline void to_json(json &j, const youi::FlavorColorColorRgba &x)
     {
         j = json::object();
         j["a"] = x.a;
@@ -212,40 +239,38 @@ namespace nlohmann
         j["r"] = x.r;
     }
 
-    inline void from_json(const json &j, Youi::FlavorColor &x)
+    inline void from_json(const json &j, youi::FlavorColor &x)
     {
-        x.color_rgba = Youi::get_optional<Youi::ColorRgba>(j, "colorRGBA");
-        x.metadata = Youi::get_optional<std::vector<std::string>>(j, "metadata");
-        x.name = Youi::get_optional<std::string>(j, "name");
+        x.color_rgba = youi::get_optional<youi::FlavorColorColorRgba>(j, "colorRGBA");
+        x.name = youi::get_optional<std::string>(j, "name");
     }
 
-    inline void to_json(json &j, const Youi::FlavorColor &x)
+    inline void to_json(json &j, const youi::FlavorColor &x)
     {
         j = json::object();
         j["colorRGBA"] = x.color_rgba;
-        j["metadata"] = x.metadata;
         j["name"] = x.name;
     }
 
-    inline void from_json(const json &j, Youi::Metadata &x)
+    inline void from_json(const json &j, youi::PurpleMetadata &x)
     {
-        x.prop = Youi::get_optional<std::vector<std::string>>(j, "prop");
+        x.prop = youi::get_optional<std::vector<std::string>>(j, "prop");
     }
 
-    inline void to_json(json &j, const Youi::Metadata &x)
+    inline void to_json(json &j, const youi::PurpleMetadata &x)
     {
         j = json::object();
         j["prop"] = x.prop;
     }
 
-    inline void from_json(const json &j, Youi::ColorsFlavor &x)
+    inline void from_json(const json &j, youi::ColorsFlavor &x)
     {
-        x.flavor_colors = Youi::get_optional<std::vector<Youi::FlavorColor>>(j, "flavorColors");
-        x.metadata = Youi::get_optional<Youi::Metadata>(j, "metadata");
-        x.name = Youi::get_optional<std::string>(j, "name");
+        x.flavor_colors = youi::get_optional<std::vector<youi::FlavorColor>>(j, "flavorColors");
+        x.metadata = youi::get_optional<youi::PurpleMetadata>(j, "metadata");
+        x.name = youi::get_optional<std::string>(j, "name");
     }
 
-    inline void to_json(json &j, const Youi::ColorsFlavor &x)
+    inline void to_json(json &j, const youi::ColorsFlavor &x)
     {
         j = json::object();
         j["flavorColors"] = x.flavor_colors;
@@ -253,57 +278,57 @@ namespace nlohmann
         j["name"] = x.name;
     }
 
-    inline void from_json(const json &j, Youi::Colors &x)
+    inline void from_json(const json &j, youi::Colors &x)
     {
-        x.flavors = Youi::get_optional<std::vector<Youi::ColorsFlavor>>(j, "flavors");
+        x.flavors = youi::get_optional<std::vector<youi::ColorsFlavor>>(j, "flavors");
     }
 
-    inline void to_json(json &j, const Youi::Colors &x)
+    inline void to_json(json &j, const youi::Colors &x)
     {
         j = json::object();
         j["flavors"] = x.flavors;
     }
 
-    inline void from_json(const json &j, Youi::Instructions &x)
+    inline void from_json(const json &j, youi::Instructions &x)
     {
-        x.design_system_format = Youi::get_optional<std::string>(j, "designSystemFormat");
-        x.metadata = Youi::get_optional<std::vector<std::string>>(j, "metadata");
+        x.design_system_format = youi::get_optional<std::string>(j, "designSystemFormat");
+        x.metadata = youi::get_optional<std::vector<std::string>>(j, "metadata");
     }
 
-    inline void to_json(json &j, const Youi::Instructions &x)
+    inline void to_json(json &j, const youi::Instructions &x)
     {
         j = json::object();
         j["designSystemFormat"] = x.design_system_format;
         j["metadata"] = x.metadata;
     }
 
-    inline void from_json(const json &j, Youi::Curve &x)
+    inline void from_json(const json &j, youi::Curve &x)
     {
-        x.curvetype = Youi::get_optional<std::string>(j, "curvetype");
-        x.points = Youi::get_optional<std::vector<json>>(j, "points");
+        x.curvetype = youi::get_optional<std::string>(j, "curvetype");
+        x.points = youi::get_optional<std::vector<json>>(j, "points");
     }
 
-    inline void to_json(json &j, const Youi::Curve &x)
+    inline void to_json(json &j, const youi::Curve &x)
     {
         j = json::object();
         j["curvetype"] = x.curvetype;
         j["points"] = x.points;
     }
 
-    inline void from_json(const json &j, Youi::MotionFlavor &x)
+    inline void from_json(const json &j, youi::MotionFlavor &x)
     {
-        x.curve = Youi::get_optional<Youi::Curve>(j, "curve");
-        x.delay = Youi::get_optional<int64_t>(j, "delay");
-        x.delayunits = Youi::get_optional<std::string>(j, "delayunits");
-        x.description = Youi::get_optional<std::string>(j, "description");
-        x.duration = Youi::get_optional<double>(j, "duration");
-        x.durationunit = Youi::get_optional<std::string>(j, "durationunit");
-        x.name = Youi::get_optional<std::string>(j, "name");
-        x.title = Youi::get_optional<std::string>(j, "title");
-        x.transformation = Youi::get_optional<std::string>(j, "transformation");
+        x.curve = youi::get_optional<youi::Curve>(j, "curve");
+        x.delay = youi::get_optional<int64_t>(j, "delay");
+        x.delayunits = youi::get_optional<std::string>(j, "delayunits");
+        x.description = youi::get_optional<std::string>(j, "description");
+        x.duration = youi::get_optional<double>(j, "duration");
+        x.durationunit = youi::get_optional<std::string>(j, "durationunit");
+        x.name = youi::get_optional<std::string>(j, "name");
+        x.title = youi::get_optional<std::string>(j, "title");
+        x.transformation = youi::get_optional<std::string>(j, "transformation");
     }
 
-    inline void to_json(json &j, const Youi::MotionFlavor &x)
+    inline void to_json(json &j, const youi::MotionFlavor &x)
     {
         j = json::object();
         j["curve"] = x.curve;
@@ -317,59 +342,98 @@ namespace nlohmann
         j["transformation"] = x.transformation;
     }
 
-    inline void from_json(const json &j, Youi::Motion &x)
+    inline void from_json(const json &j, youi::Motion &x)
     {
-        x.flavors = Youi::get_optional<std::vector<Youi::MotionFlavor>>(j, "flavors");
+        x.flavors = youi::get_optional<std::vector<youi::MotionFlavor>>(j, "flavors");
     }
 
-    inline void to_json(json &j, const Youi::Motion &x)
+    inline void to_json(json &j, const youi::Motion &x)
     {
         j = json::object();
         j["flavors"] = x.flavors;
     }
 
-    inline void from_json(const json &j, Youi::TypographyFlavor &x)
+    inline void from_json(const json &j, youi::FluffyMetadata &x)
     {
-        x.alignment = Youi::get_optional<std::string>(j, "alignment");
-        x.color = Youi::get_optional<std::vector<double>>(j, "color");
-        x.font = Youi::get_optional<std::string>(j, "font");
-        x.name = Youi::get_optional<std::string>(j, "name");
-        x.rem = Youi::get_optional<std::string>(j, "rem");
-        x.size = Youi::get_optional<double>(j, "size");
+        x.prop = youi::get_optional<std::vector<std::string>>(j, "prop");
     }
 
-    inline void to_json(json &j, const Youi::TypographyFlavor &x)
+    inline void to_json(json &j, const youi::FluffyMetadata &x)
     {
         j = json::object();
-        j["alignment"] = x.alignment;
-        j["color"] = x.color;
-        j["font"] = x.font;
+        j["prop"] = x.prop;
+    }
+
+    inline void from_json(const json &j, youi::TypographyStyleColorRgba &x)
+    {
+        x.a = youi::get_optional<double>(j, "a");
+        x.b = youi::get_optional<double>(j, "b");
+        x.g = youi::get_optional<double>(j, "g");
+        x.r = youi::get_optional<double>(j, "r");
+    }
+
+    inline void to_json(json &j, const youi::TypographyStyleColorRgba &x)
+    {
+        j = json::object();
+        j["a"] = x.a;
+        j["b"] = x.b;
+        j["g"] = x.g;
+        j["r"] = x.r;
+    }
+
+    inline void from_json(const json &j, youi::TypographyStyle &x)
+    {
+        x.color_rgba = youi::get_optional<youi::TypographyStyleColorRgba>(j, "colorRGBA");
+        x.fontname = youi::get_optional<std::string>(j, "fontname");
+        x.fontsize = youi::get_optional<double>(j, "fontsize");
+        x.name = youi::get_optional<std::string>(j, "name");
+    }
+
+    inline void to_json(json &j, const youi::TypographyStyle &x)
+    {
+        j = json::object();
+        j["colorRGBA"] = x.color_rgba;
+        j["fontname"] = x.fontname;
+        j["fontsize"] = x.fontsize;
         j["name"] = x.name;
-        j["rem"] = x.rem;
-        j["size"] = x.size;
     }
 
-    inline void from_json(const json &j, Youi::Typography &x)
+    inline void from_json(const json &j, youi::TypographyFlavor &x)
     {
-        x.flavors = Youi::get_optional<std::vector<Youi::TypographyFlavor>>(j, "flavors");
+        x.metadata = youi::get_optional<youi::FluffyMetadata>(j, "metadata");
+        x.name = youi::get_optional<std::string>(j, "name");
+        x.typography_styles = youi::get_optional<std::vector<youi::TypographyStyle>>(j, "typographyStyles");
     }
 
-    inline void to_json(json &j, const Youi::Typography &x)
+    inline void to_json(json &j, const youi::TypographyFlavor &x)
+    {
+        j = json::object();
+        j["metadata"] = x.metadata;
+        j["name"] = x.name;
+        j["typographyStyles"] = x.typography_styles;
+    }
+
+    inline void from_json(const json &j, youi::Typography &x)
+    {
+        x.flavors = youi::get_optional<std::vector<youi::TypographyFlavor>>(j, "flavors");
+    }
+
+    inline void to_json(json &j, const youi::Typography &x)
     {
         j = json::object();
         j["flavors"] = x.flavors;
     }
 
-    inline void from_json(const json &j, Youi::DesignSystem &x)
+    inline void from_json(const json &j, youi::DesignSystem &x)
     {
-        x.colors = Youi::get_optional<Youi::Colors>(j, "colors");
-        x.components = Youi::get_optional<std::map<std::string, json>>(j, "components");
-        x.instructions = Youi::get_optional<Youi::Instructions>(j, "instructions");
-        x.motion = Youi::get_optional<Youi::Motion>(j, "motion");
-        x.typography = Youi::get_optional<Youi::Typography>(j, "typography");
+        x.colors = youi::get_optional<youi::Colors>(j, "colors");
+        x.components = youi::get_optional<std::map<std::string, json>>(j, "components");
+        x.instructions = youi::get_optional<youi::Instructions>(j, "instructions");
+        x.motion = youi::get_optional<youi::Motion>(j, "motion");
+        x.typography = youi::get_optional<youi::Typography>(j, "typography");
     }
 
-    inline void to_json(json &j, const Youi::DesignSystem &x)
+    inline void to_json(json &j, const youi::DesignSystem &x)
     {
         j = json::object();
         j["colors"] = x.colors;

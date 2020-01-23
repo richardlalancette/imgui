@@ -27,7 +27,7 @@ using json = nlohmann::json;
 @property(nonatomic, strong) id <MTLCommandQueue> commandQueue;
 @end
 
-Youi::DesignSystem designSystem;
+youi::DesignSystem gDesignSystem;
 ImFont *bodyFont = nullptr;
 ImFont *filebrowserFont = nullptr;
 ImFont *H1Font = nullptr;
@@ -170,7 +170,7 @@ void YouiGui::RenderColorTab(bool *open)
 
         ImGui::BeginChild("child");
         {
-            auto colors = designSystem.colors;
+            auto colors = gDesignSystem.colors;
 
             if (colors != nullptr)
             {
@@ -237,116 +237,6 @@ void YouiGui::RenderColorTab(bool *open)
     }
 }
 
-void YouiGui::CommandAddLinkedSolid(float *color)
-{
-    /*
-    function makeColorEntry(name, color)
-    {
-        var params = new Object;
-        params.color = color;
-        params.color[0] = parseFloat(params.color[0]) / 255.0;
-        params.color[1] = parseFloat(params.color[1]) / 255.0;
-        params.color[2] = parseFloat(params.color[2]) / 255.0;
-        params.name = name;
-
-        app.beginUndoGroup("create palette entry");
-
-        // find current palette
-        var myComp = null;
-        for (var i = 1; i <= app.project.numItems; i ++) {
-            if ((app.project.item(i) instanceof CompItem) && (app.project.item(i).name === 'Color Palette'))
-            {
-                myComp = app.project.item(i);
-                break;
-            }
-        }
-
-        // create if not existing
-        if (myComp == null)
-            return;
-
-        // create
-        var effect1 = myComp.layer(1).Effects.addProperty("ADBE Fill")
-        effect1("Color").setValue(params.color);
-        effect1.name = params.name;
-
-        app.endUndoGroup();
-
-    }
-
-     function setupPalette()
-        {
-            app.beginUndoGroup("create style dictionary");
-
-            // find current comp, if any
-            var myComp = null;
-            for (var i = 1; i <= app.project.numItems; i ++) {
-                if ((app.project.item(i) instanceof CompItem) && (app.project.item(i).name === 'Color Palette'))
-                {
-                    myComp = app.project.item(i);
-
-                    // clear it out
-                    for(var i = myComp.numLayers; i > 0; i--)
-                    {
-                        myComp.layer(i).remove();
-                    }
-                    break;
-                }
-            }
-
-            // create if not existing
-            if (myComp == null)
-                myComp=app.project.items.addComp("Color Palette", 720, 576, 1, 1, 25)
-
-            // create shapes container
-            var shapeLayer = myComp.layers.addShape();
-            shapeLayer.name = "Color Palette"
-
-            app.endUndoGroup();
-        }
-     */
-
-    // 1) make a fill effect on selected layer
-    // 2) link color for fill to palette
-
-    /*  function makeLink(key)
-        {
-            var linkExpression = "palette = comp(\"Color Palette\"); \
-                        try{ palette.layer(1).effect(\"" + key + "\").param(\"Color\");\
-                        }catch(e){ value; }";
-
-            var myLayers = app.project.activeItem.selectedLayers;
-            if (myLayers.length == 0)
-                return;
-
-            var layer = myLayers[0];
-
-            if (isSolid(layer))
-            {
-                // make a fill effect, then link via expressions
-                // look for existing fill link
-                var effect1 = null;
-                for(var i=1;i<=layer.effect.numProperties;i++)
-                {
-                    var curFx = layer.effect(i);
-                    if (curFx.name == "colorlink")
-                    {
-                        effect1 = curFx;
-                        break;
-                    }
-                }
-
-                if (effect1 == null)
-                {
-                    effect1 = layer.Effects.addProperty("ADBE Fill")
-                    effect1.name = "colorlink";
-                }
-                effect1("Color").expression = linkExpression;
-            }
-        }
-     */
-}
-
 void YouiGui::RenderTypographyTab(bool *open)
 {
     if (!*open)
@@ -354,9 +244,46 @@ void YouiGui::RenderTypographyTab(bool *open)
         return;
     }
 
+    ImGuiColorEditFlags colorDisplayFlags = 0;
+    colorDisplayFlags |= ImGuiColorEditFlags_NoPicker;
+    colorDisplayFlags |= ImGuiColorEditFlags_AlphaPreviewHalf;
+    colorDisplayFlags |= ImGuiColorEditFlags_NoDragDrop;
+
     if (ImGui::BeginTabItem(ICON_FA_FONT " Type"))
     {
-        TabPageHeader("Typography", vidTextureID);
+        auto typography = gDesignSystem.typography;
+
+        if (typography != nullptr)
+        {
+            auto flavors = typography->flavors;
+            auto flavor = (*flavors)[0];
+
+            for (auto &typeStyle : *flavor.typography_styles)
+            {
+                auto colorRGBA = *typeStyle.color_rgba;
+                auto styleName = typeStyle.name->c_str();
+                auto fontName = *typeStyle.fontname;
+                auto fontSize = *typeStyle.fontsize;
+
+                float color[] = {static_cast<float>(*colorRGBA.r), static_cast<float>(*colorRGBA.g), static_cast<float>(*colorRGBA.b), static_cast<float>(*colorRGBA.a)};
+
+                std::string valueToHash = std::string(flavor.name->c_str()) + typeStyle.name->c_str();
+                size_t hash1 = std::hash<std::string>{}(valueToHash);
+                std::string refCount = std::to_string(hash1 % 6);
+                ImGui::Text(refCount.c_str(), "");
+                ImGui::SameLine();
+
+                if (ImGui::ColorButton(styleName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
+                {
+                    CommandAddLinkedSolid(color);
+                }
+
+                ImGui::SameLine();
+                ImGui::TextWrapped(fontName.c_str());
+                ImGui::SameLine();
+                ImGui::TextWrapped(std::to_string(fontSize).c_str());
+            }
+        }
 
         ImGui::EndTabItem();
     }
@@ -469,14 +396,14 @@ void YouiGui::RenderDesignSystemInstructionsTab(bool *open)
     {
         return;
     }
-    
+
     if (ImGui::BeginTabItem(ICON_FA_PENCIL_RULER " Design"))
     {
         TabPageHeader("Design System", vidTextureID);
 
         ImGui::BeginChild("child");
         {
-            auto ds = designSystem.instructions;
+            auto ds = gDesignSystem.instructions;
             ImGui::TextWrapped("Format: %s", ds->design_system_format->c_str());
             ImGui::Separator();
             for (const auto &m : *ds->metadata)
@@ -501,6 +428,116 @@ void YouiGui::RenderEmptyDesignSystemTab()
     ImGui::TextWrapped(text.c_str());
     ImGui::PopFont();
     ImGui::EndChild();
+}
+
+void YouiGui::CommandAddLinkedSolid(float *color)
+{
+    /*
+    function makeColorEntry(name, color)
+    {
+        var params = new Object;
+        params.color = color;
+        params.color[0] = parseFloat(params.color[0]) / 255.0;
+        params.color[1] = parseFloat(params.color[1]) / 255.0;
+        params.color[2] = parseFloat(params.color[2]) / 255.0;
+        params.name = name;
+
+        app.beginUndoGroup("create palette entry");
+
+        // find current palette
+        var myComp = null;
+        for (var i = 1; i <= app.project.numItems; i ++) {
+            if ((app.project.item(i) instanceof CompItem) && (app.project.item(i).name === 'Color Palette'))
+            {
+                myComp = app.project.item(i);
+                break;
+            }
+        }
+
+        // create if not existing
+        if (myComp == null)
+            return;
+
+        // create
+        var effect1 = myComp.layer(1).Effects.addProperty("ADBE Fill")
+        effect1("Color").setValue(params.color);
+        effect1.name = params.name;
+
+        app.endUndoGroup();
+
+    }
+
+     function setupPalette()
+        {
+            app.beginUndoGroup("create style dictionary");
+
+            // find current comp, if any
+            var myComp = null;
+            for (var i = 1; i <= app.project.numItems; i ++) {
+                if ((app.project.item(i) instanceof CompItem) && (app.project.item(i).name === 'Color Palette'))
+                {
+                    myComp = app.project.item(i);
+
+                    // clear it out
+                    for(var i = myComp.numLayers; i > 0; i--)
+                    {
+                        myComp.layer(i).remove();
+                    }
+                    break;
+                }
+            }
+
+            // create if not existing
+            if (myComp == null)
+                myComp=app.project.items.addComp("Color Palette", 720, 576, 1, 1, 25)
+
+            // create shapes container
+            var shapeLayer = myComp.layers.addShape();
+            shapeLayer.name = "Color Palette"
+
+            app.endUndoGroup();
+        }
+     */
+
+    // 1) make a fill effect on selected layer
+    // 2) link color for fill to palette
+
+    /*  function makeLink(key)
+        {
+            var linkExpression = "palette = comp(\"Color Palette\"); \
+                        try{ palette.layer(1).effect(\"" + key + "\").param(\"Color\");\
+                        }catch(e){ value; }";
+
+            var myLayers = app.project.activeItem.selectedLayers;
+            if (myLayers.length == 0)
+                return;
+
+            var layer = myLayers[0];
+
+            if (isSolid(layer))
+            {
+                // make a fill effect, then link via expressions
+                // look for existing fill link
+                var effect1 = null;
+                for(var i=1;i<=layer.effect.numProperties;i++)
+                {
+                    var curFx = layer.effect(i);
+                    if (curFx.name == "colorlink")
+                    {
+                        effect1 = curFx;
+                        break;
+                    }
+                }
+
+                if (effect1 == null)
+                {
+                    effect1 = layer.Effects.addProperty("ADBE Fill")
+                    effect1.name = "colorlink";
+                }
+                effect1("Color").expression = linkExpression;
+            }
+        }
+     */
 }
 
 void YouiGui::SetYouiLightTheme()
@@ -1085,7 +1122,7 @@ void TryToOpenDesignSystem(const std::string &designSystemFilename)
         try
         {
             bDesignSystemLoaded = true;
-            designSystem = nlohmann::json::parse(designSystemJsonFile);
+            gDesignSystem = nlohmann::json::parse(designSystemJsonFile);
         }
         catch(json::parse_error)
         {
