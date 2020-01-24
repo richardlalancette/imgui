@@ -14,6 +14,8 @@
 #import "IconsFontAwesome5.h"
 #include "designsystem.h"
 
+#include <fstream>
+
 using json = nlohmann::json;
 
 #if TARGET_OS_OSX
@@ -26,6 +28,8 @@ using json = nlohmann::json;
 @property(nonatomic, strong) id <MTLDevice> device;
 @property(nonatomic, strong) id <MTLCommandQueue> commandQueue;
 @end
+
+typedef std::tuple<std::string, int> FontDetailsTupleType;
 
 youi::DesignSystem gDesignSystem;
 ImFont *bodyFont = nullptr;
@@ -40,6 +44,8 @@ ImTextureID modTextureID;
 bool bWindowBrowseFiles = false;
 bool bDesignSystemLoaded = false;
 std::vector<std::string> recently_used_files;
+std::map<FontDetailsTupleType, std::string> gFontToLoadOnNextPast;
+
 const char *fakeFlavors[] = {"Default", "JVR"};
 
 void DetailsColorButton(const char *name, float pDouble[4], ImGuiColorEditFlags flags);
@@ -67,7 +73,8 @@ public:
             bool visible = true;
             bool ColorsTabVisible = true;
             bool TypographyTabVisible = true;
-            bool MotionTabVisible = true;
+            bool MotionTabVisible = false;
+            bool LayoutTabVisible = false;
             bool SettingsTabVisible = true;
             bool DesignTabVisible = true;
         } mainAEPanel;
@@ -84,6 +91,7 @@ public:
     void RenderColorTab(bool *open);
     void RenderTypographyTab(bool *open);
     void RenderMotionTab(bool *open);
+    void RenderLayoutTab(bool *open);
     void RenderSettingsTab(bool *open);
     void RenderDesignSystemInstructionsTab(bool *open);
     void RenderEmptyDesignSystemTab();
@@ -92,16 +100,17 @@ public:
 
     void SetYouiLightTheme();
     void SetYouiDarkTheme();
+    bool CheckFileExist(const std::string &path);
 
     /*
      * All font added this way is owned by the atlas.
      */
-    ImFont *LoadUserFont(const std::string &fontName, const std::string &path);
+    ImFont *LoadUserFont(const FontDetailsTupleType &fontDetails, const std::string &filename);
 
     /*
      * All font added this way is owned by the atlas.
      */
-    ImFont *LoadUserFont(const std::string &fontName, const std::string &path, const ImFontConfig &fontConfig);
+    ImFont *LoadUserFont(const FontDetailsTupleType &fontDetails, const std::string &filename, const ImFontConfig &fontConfig);
 };
 
 void YouiGui::Render()
@@ -141,6 +150,7 @@ void YouiGui::RenderMainAEPanel(bool *open)
                 RenderColorTab(&m_youiGuiDataModel.mainAEPanel.ColorsTabVisible);
                 RenderTypographyTab(&m_youiGuiDataModel.mainAEPanel.TypographyTabVisible);
                 RenderMotionTab(&m_youiGuiDataModel.mainAEPanel.MotionTabVisible);
+                RenderLayoutTab(&m_youiGuiDataModel.mainAEPanel.LayoutTabVisible);
                 RenderSettingsTab(&m_youiGuiDataModel.mainAEPanel.SettingsTabVisible);
                 RenderDesignSystemInstructionsTab(&m_youiGuiDataModel.mainAEPanel.DesignTabVisible);
             }
@@ -258,31 +268,51 @@ void YouiGui::RenderTypographyTab(bool *open)
             auto flavors = typography->flavors;
             auto flavor = (*flavors)[0];
 
-            for (auto &typeStyle : *flavor.typography_styles)
+            ImGui::BeginChild("typographyList");
             {
-                auto colorRGBA = *typeStyle.color_rgba;
-                auto styleName = typeStyle.name->c_str();
-                auto fontName = *typeStyle.fontname;
-                auto fontSize = *typeStyle.fontsize;
-
-                float color[] = {static_cast<float>(*colorRGBA.r), static_cast<float>(*colorRGBA.g), static_cast<float>(*colorRGBA.b), static_cast<float>(*colorRGBA.a)};
-
-                std::string valueToHash = std::string(flavor.name->c_str()) + typeStyle.name->c_str();
-                size_t hash1 = std::hash<std::string>{}(valueToHash);
-                std::string refCount = std::to_string(hash1 % 6);
-                ImGui::Text(refCount.c_str(), "");
-                ImGui::SameLine();
-
-                if (ImGui::ColorButton(styleName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
+                for (auto &typeStyle : *flavor.typography_styles)
                 {
-                    CommandAddLinkedSolid(color);
-                }
+                    auto colorRGBA = *typeStyle.color_rgba;
+                    auto styleName = typeStyle.name->c_str();
+                    auto fontName = *typeStyle.fontname;
+                    int fontSize = *typeStyle.fontsize;
+                    std::string path = fontName;
+                    std::string sectionName = fontName + std::to_string(fontSize);
 
-                ImGui::SameLine();
-                ImGui::TextWrapped(fontName.c_str());
-                ImGui::SameLine();
-                ImGui::TextWrapped(std::to_string(fontSize).c_str());
+                    const std::string &fullFontName = fontName + std::to_string(fontSize);
+                    ImFont *font = userFonts[fullFontName];
+                    ImGui::PushFont(font);
+                    float estimatedTextHeight = std::max(ImGui::CalcTextSize(fontName.c_str()).y, 30.0f);
+                    ImGui::PopFont();
+
+                    ImGui::Indent(ImGui::GetStyle().FramePadding.x);
+                    ImGui::BeginChildFrame(ImGui::GetID(sectionName.c_str()), ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().FramePadding.x*2, estimatedTextHeight * 1.5), true);
+                    {
+                        float color[] = {static_cast<float>(*colorRGBA.r), static_cast<float>(*colorRGBA.g), static_cast<float>(*colorRGBA.b), static_cast<float>(*colorRGBA.a)};
+
+                        std::string valueToHash = std::string(flavor.name->c_str()) + typeStyle.name->c_str();
+                        size_t hash1 = std::hash<std::string>{}(valueToHash);
+                        std::string refCount = std::to_string(hash1 % 6);
+                        ImGui::Text(refCount.c_str(), "");
+                        ImGui::SameLine();
+
+                        if (ImGui::ColorButton(styleName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
+                        {
+                            CommandAddLinkedSolid(color);
+                        }
+
+                        ImGui::PushFont(font);
+                        ImGui::SameLine();
+                        ImGui::TextWrapped(fontName.c_str());
+                        ImGui::SameLine();
+                        ImGui::TextWrapped(std::to_string(fontSize).c_str());
+                        ImGui::PopFont();
+                    }
+                    ImGui::EndChildFrame();
+                    ImGui::Unindent(ImGui::GetStyle().FramePadding.x);
+                }
             }
+            ImGui::EndChild();
         }
 
         ImGui::EndTabItem();
@@ -298,8 +328,6 @@ void YouiGui::RenderMotionTab(bool *open)
 
     if (ImGui::BeginTabItem(ICON_FA_FIGHTER_JET " Motion"))
     {
-        TabPageHeader("Motion", vidTextureID);
-
         ImGui::BeginTabBar("Design System!");
         {
             if (ImGui::BeginTabItem(" Macro"))
@@ -350,8 +378,6 @@ void YouiGui::RenderSettingsTab(bool *open)
 
     if (ImGui::BeginTabItem(ICON_FA_COGS " Settings"))
     {
-        TabPageHeader("Settings", vidTextureID);
-
         static int style_idx = -1;
         if (ImGui::Combo("Colors##Selector", &style_idx, "Classic\0Dark\0Light\0Youi Light\0Youi Dark\0"))
         {
@@ -390,6 +416,23 @@ void YouiGui::RenderSettingsTab(bool *open)
     }
 }
 
+void YouiGui::RenderLayoutTab(bool *open)
+{
+    if (!*open)
+    {
+        return;
+    }
+
+    if (ImGui::BeginTabItem(ICON_FA_PENCIL_RULER " Layout"))
+    {
+        ImGui::BeginChild("child");
+        {
+        }
+        ImGui::EndChild();
+        ImGui::EndTabItem();
+    }
+}
+
 void YouiGui::RenderDesignSystemInstructionsTab(bool *open)
 {
     if (!*open)
@@ -399,8 +442,6 @@ void YouiGui::RenderDesignSystemInstructionsTab(bool *open)
 
     if (ImGui::BeginTabItem(ICON_FA_PENCIL_RULER " Design"))
     {
-        TabPageHeader("Design System", vidTextureID);
-
         ImGui::BeginChild("child");
         {
             auto ds = gDesignSystem.instructions;
@@ -706,27 +747,89 @@ void YouiGui::SetYouiDarkTheme()
     colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 }
 
-ImFont *YouiGui::LoadUserFont(const std::string &fontName, const std::string &path)
+ImFont *YouiGui::LoadUserFont(const FontDetailsTupleType &fontDetails, const std::string &filename)
 {
     ImFontConfig fontConfig;
     fontConfig.FontDataOwnedByAtlas = true;
     fontConfig.MergeMode = false;
     fontConfig.OversampleH = 3;
 
-    return LoadUserFont(fontName, path, fontConfig);
+    return LoadUserFont(fontDetails, filename, fontConfig);
 }
 
-ImFont *YouiGui::LoadUserFont(const std::string &fontName, const std::string &path, const ImFontConfig &fontConfig)
+bool YouiGui::CheckFileExist(const std::string &path)
 {
-    auto fontIterator = userFonts.find(fontName);
+    std::ifstream Infield(path);
+
+    return Infield.good();
+}
+
+ImFont *YouiGui::LoadUserFont(const FontDetailsTupleType &fontDetails, const std::string &filename, const ImFontConfig &fontConfig)
+{
+    std::string fontName = std::get<0>(fontDetails);
+    int fontSize = std::get<1>(fontDetails);
+    std::string key = fontName + std::to_string(fontSize);
+
+    auto fontIterator = userFonts.find(key);
 
     if (fontIterator == userFonts.end())
     {
-        ImFont *font = ImGui::GetIO().Fonts->AddFontFromFileTTF(path.c_str(), 48.0f, &fontConfig);
+        std::string home = getenv("HOME");
+        std::string pathToFonts = "/Library/Fonts/";
+        std::string pathUserToFonts = home + "/Library/Fonts/";
+        std::string pathToTest;
+        std::string availablePath;
 
-        userFonts[fontName] = font;
+        pathToTest = pathToFonts + filename + ".ttf";
 
-        return font;
+        if (CheckFileExist(pathToTest))
+        {
+            availablePath = pathToTest;
+        }
+        else
+        {
+            pathToTest = pathToFonts + filename + ".otf";
+
+            if (CheckFileExist(pathToTest))
+            {
+                availablePath = pathToTest;
+            }
+            else
+            {
+                pathToTest = pathUserToFonts + filename + ".ttf";
+
+                if (CheckFileExist(pathToTest))
+                {
+                    availablePath = pathToTest;
+                }
+                else
+                {
+                    pathToTest = pathUserToFonts + filename + ".otf";
+
+                    if (CheckFileExist(pathToTest))
+                    {
+                        availablePath = pathToTest;
+                    }
+                    else
+                    {
+                        availablePath = pathUserToFonts + "Arial-Regular.ttf";
+                    }
+                }
+            }
+        }
+
+        if (!availablePath.empty())
+        {
+            ImFont *font = ImGui::GetIO().Fonts->AddFontFromFileTTF(availablePath.c_str(), fontSize, &fontConfig);
+
+            userFonts[key] = font;
+
+            return font;
+        }
+        else
+        {
+            return nullptr;
+        }
     }
 
     return fontIterator->second;
@@ -777,6 +880,18 @@ YouiGui gYouiGui;
 
         id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder pushDebugGroup:@"ImGui demo"];
+
+        if (!gFontToLoadOnNextPast.empty())
+        {
+            for (auto &pair : gFontToLoadOnNextPast)
+            {
+                gYouiGui.LoadUserFont(pair.first, pair.second);
+            }
+
+            ImGui_ImplMetal_CreateFontsTexture(view.device);
+
+            gFontToLoadOnNextPast.clear();
+        }
 
         // Start the Dear ImGui frame
         ImGui_ImplMetal_NewFrame(renderPassDescriptor);
@@ -1123,6 +1238,24 @@ void TryToOpenDesignSystem(const std::string &designSystemFilename)
         {
             bDesignSystemLoaded = true;
             gDesignSystem = nlohmann::json::parse(designSystemJsonFile);
+            auto typography = gDesignSystem.typography;
+
+            if (typography != nullptr)
+            {
+                auto flavors = typography->flavors;
+                auto flavor = (*flavors)[0];
+
+                for (auto &typeStyle : *flavor.typography_styles)
+                {
+                    auto fontName = *typeStyle.fontname;
+                    int fontSize = *typeStyle.fontsize;
+                    std::string path = fontName;
+
+                    FontDetailsTupleType fontDetails = std::tie(fontName, fontSize);
+
+                    gFontToLoadOnNextPast[fontDetails] = path;
+                }
+            }
         }
         catch(json::parse_error)
         {
