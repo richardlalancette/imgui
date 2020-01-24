@@ -7,5 +7,4 @@ dependencies: \
   /Users/richardlalancette/youidev/experimental/imgui/imconfig.h \
   /Users/richardlalancette/youidev/experimental/imgui/imgui_internal.h \
   /Users/richardlalancette/youidev/experimental/imgui/imstb_textedit.h \
-  /Users/richardlalancette/youidev/experimental/imgui/examples/example_apple_metal/Shared/ImguiWindowsFileIO.hpp \
   /Users/richardlalancette/youidev/experimental/imgui/examples/example_apple_metal/IconsFontAwesome5.h
