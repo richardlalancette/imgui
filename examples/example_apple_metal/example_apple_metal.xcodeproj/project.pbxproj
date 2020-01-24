@@ -22,9 +22,6 @@
 		83BBE9DE20EB3FFC00295997 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8307E7E620E9F9C900473790 /* main.m */; };
 		83BBE9DF20EB40AE00295997 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8307E7DD20E9F9C900473790 /* AppDelegate.m */; };
 		83BBE9E020EB42D000295997 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8307E7CB20E9F9C900473790 /* ViewController.mm */; };
-		83BBE9E520EB46B900295997 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83BBE9E420EB46B900295997 /* Metal.framework */; };
-		83BBE9E720EB46BD00295997 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83BBE9E620EB46BD00295997 /* MetalKit.framework */; };
-		83BBE9E920EB46C100295997 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83BBE9E820EB46C100295997 /* ModelIO.framework */; };
 		83BBE9EC20EB471700295997 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83BBE9EA20EB471700295997 /* MetalKit.framework */; };
 		83BBE9ED20EB471700295997 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83BBE9EB20EB471700295997 /* Metal.framework */; };
 		83BBE9EF20EB471C00295997 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83BBE9EE20EB471C00295997 /* ModelIO.framework */; };
@@ -61,9 +58,6 @@
 		836D2A2D20EE208E0098E909 /* imgui_impl_osx.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = imgui_impl_osx.mm; path = ../../imgui_impl_osx.mm; sourceTree = "<group>"; };
 		836D2A2F20EE4A180098E909 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		836D2A3120EE4A900098E909 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
-		83BBE9E420EB46B900295997 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.4.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
-		83BBE9E620EB46BD00295997 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.4.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
-		83BBE9E820EB46C100295997 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.4.sdk/System/Library/Frameworks/ModelIO.framework; sourceTree = DEVELOPER_DIR; };
 		83BBE9EA20EB471700295997 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		83BBE9EB20EB471700295997 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		83BBE9EE20EB471C00295997 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
@@ -126,7 +120,6 @@
 		C500C7B42E06ADC701DA7D93 /* Raleway-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
 		C500C7C3F7087BF55FE43C64 /* Raleway-ExtraLightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-ExtraLightItalic.ttf"; sourceTree = "<group>"; };
 		C500C808CFD71EBD8F07CB7A /* FiraCode-VariableFont:wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "FiraCode-VariableFont:wght.ttf"; sourceTree = "<group>"; };
-		C500C81B5452A922D409C58E /* picojson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picojson.h; sourceTree = "<group>"; };
 		C500C8517F6CB8693FF9E8BB /* IBMPlexMono-SemiBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "IBMPlexMono-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
 		C500C85692DD676604521F9C /* CourierPrime-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "CourierPrime-BoldItalic.ttf"; sourceTree = "<group>"; };
 		C500C8572CC8ACE952E55434 /* FiraCode-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "FiraCode-Bold.ttf"; sourceTree = "<group>"; };
@@ -198,9 +191,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				83BBE9E920EB46C100295997 /* ModelIO.framework in Frameworks */,
-				83BBE9E720EB46BD00295997 /* MetalKit.framework in Frameworks */,
-				83BBE9E520EB46B900295997 /* Metal.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -287,9 +277,6 @@
 				83BBE9EE20EB471C00295997 /* ModelIO.framework */,
 				83BBE9EB20EB471700295997 /* Metal.framework */,
 				83BBE9EA20EB471700295997 /* MetalKit.framework */,
-				83BBE9E820EB46C100295997 /* ModelIO.framework */,
-				83BBE9E620EB46BD00295997 /* MetalKit.framework */,
-				83BBE9E420EB46B900295997 /* Metal.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -304,7 +291,6 @@
 				83BBEA0120EB54E700295997 /* imgui_draw.cpp */,
 				07A82ED62139413C0078D120 /* imgui_internal.h */,
 				07A82ED72139413C0078D120 /* imgui_widgets.cpp */,
-				C500C81B5452A922D409C58E /* picojson.h */,
 				C500C869CD0582E49A3726A7 /* nlohmann */,
 				C500CEE78B82F7C8310257EF /* IconsFontAwesome5.h */,
 				C500CD13381FA6988190696D /* Karla-Regular.ttf */,

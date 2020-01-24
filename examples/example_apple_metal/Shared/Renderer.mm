@@ -18,20 +18,6 @@ YouiGui gYouiGui;
 
 @implementation Renderer
 
-- (id <MTLTexture>)loadTextureUsingMetalKit:(NSURL *)url device:(id <MTLDevice>)device
-{
-    MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
-
-    NSError *error;
-    id <MTLTexture> texture = [loader newTextureWithContentsOfURL:url options:nil error:&error];
-
-    if (!texture)
-    {
-        NSLog(@"Failed to create the texture from %@ due to %@", url.absoluteString, error.localizedDescription);
-    }
-    return texture;
-}
-
 - (nonnull instancetype)initWithView:(nonnull MTKView *)view;
 {
     self = [super init];

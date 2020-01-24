@@ -1,6 +1,5 @@
 #include "YouiDesignSystemPanel.h"
 
-#include "imgui_impl_metal.h"
 #include "ImguiWindowsFileIO.hpp"
 #include "json.hpp"
 #include "IconsFontAwesome5.h"
