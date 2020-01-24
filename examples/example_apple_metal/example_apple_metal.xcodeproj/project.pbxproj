@@ -36,6 +36,8 @@
 		83BBEA0820EB54E700295997 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0220EB54E700295997 /* imgui_demo.cpp */; };
 		83BBEA0920EB54E700295997 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0320EB54E700295997 /* imgui.cpp */; };
 		83BBEA0A20EB54E700295997 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83BBEA0320EB54E700295997 /* imgui.cpp */; };
+		C500C75864EFB96940CC4614 /* YouiDesignSystemPanel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500CC7EFDF15A1FB63FAE5D /* YouiDesignSystemPanel.cpp */; };
+		C500C910588C6CA1C7965F9D /* YouiDesignSystemPanel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500CC7EFDF15A1FB63FAE5D /* YouiDesignSystemPanel.cpp */; };
 		C500CA63A88B1923C71550FE /* ImguiWindowsFileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500C59FC0C129E89DDAA7A9 /* ImguiWindowsFileIO.cpp */; };
 /* End PBXBuildFile section */
 
@@ -117,6 +119,7 @@
 		C500C72ABCA48279C9F1FA45 /* SourceCodePro-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-SemiBold.ttf"; sourceTree = "<group>"; };
 		C500C73C7BB7473CFED257EC /* Raleway-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-Light.ttf"; sourceTree = "<group>"; };
 		C500C74A10C1BE2C894F4788 /* fa-regular-400.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "fa-regular-400.ttf"; sourceTree = "<group>"; };
+		C500C74CC2862AD3EAB4C953 /* YouiDesignSystemPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YouiDesignSystemPanel.h; sourceTree = "<group>"; };
 		C500C764CA2983EC3C76D865 /* IBMPlexMono-ExtraLightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "IBMPlexMono-ExtraLightItalic.ttf"; sourceTree = "<group>"; };
 		C500C77DBE6DFEAC44281E4A /* SourceCodePro-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-ExtraLight.ttf"; sourceTree = "<group>"; };
 		C500C78895616C9AF16E1689 /* MajorMonoDisplay-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "MajorMonoDisplay-Regular.ttf"; sourceTree = "<group>"; };
@@ -163,6 +166,7 @@
 		C500CC1AA74ACD493BD9D18F /* RobotoMono-ThinItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "RobotoMono-ThinItalic.ttf"; sourceTree = "<group>"; };
 		C500CC679B056456A4E547ED /* SourceCodePro-MediumItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-MediumItalic.ttf"; sourceTree = "<group>"; };
 		C500CC73FEA9869C259133C9 /* OFL.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
+		C500CC7EFDF15A1FB63FAE5D /* YouiDesignSystemPanel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = YouiDesignSystemPanel.cpp; sourceTree = "<group>"; };
 		C500CC8BDFF18C33E0363051 /* Raleway-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-SemiBold.ttf"; sourceTree = "<group>"; };
 		C500CC8F2B0D7F84BBE3DD40 /* Raleway-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-BoldItalic.ttf"; sourceTree = "<group>"; };
 		C500CCA4ED6D46E7173ADF4F /* B612Mono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "B612Mono-Bold.ttf"; sourceTree = "<group>"; };
@@ -242,6 +246,8 @@
 				8307E7E620E9F9C900473790 /* main.m */,
 				C500C59FC0C129E89DDAA7A9 /* ImguiWindowsFileIO.cpp */,
 				C500C25DBB6147191FAEF386 /* ImguiWindowsFileIO.hpp */,
+				C500CC7EFDF15A1FB63FAE5D /* YouiDesignSystemPanel.cpp */,
+				C500C74CC2862AD3EAB4C953 /* YouiDesignSystemPanel.h */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -692,6 +698,7 @@
 				83BBE9FE20EB54D800295997 /* imgui_impl_metal.mm in Sources */,
 				07A82ED82139413D0078D120 /* imgui_widgets.cpp in Sources */,
 				83BBE9DE20EB3FFC00295997 /* main.m in Sources */,
+				C500C910588C6CA1C7965F9D /* YouiDesignSystemPanel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -710,6 +717,7 @@
 				836D2A2E20EE208E0098E909 /* imgui_impl_osx.mm in Sources */,
 				8307E7DE20E9F9C900473790 /* AppDelegate.m in Sources */,
 				C500CA63A88B1923C71550FE /* ImguiWindowsFileIO.cpp in Sources */,
+				C500C75864EFB96940CC4614 /* YouiDesignSystemPanel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
