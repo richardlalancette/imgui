@@ -28,10 +28,6 @@ public:
     {
         struct
         {
-        } visibility;
-
-        struct
-        {
             bool visible = true;
             bool ColorsTabVisible = true;
             bool TypographyTabVisible = true;
@@ -43,8 +39,14 @@ public:
 
         struct
         {
-            bool visible;
-        } demoWindow;
+            bool active = false;
+
+            struct
+            {
+                bool visible = false;
+            } demoWindow;
+
+        } devMode;
     } m_youiGuiDataModel;
 
 public:
@@ -84,5 +86,6 @@ public:
     void YouiSimpleTooltip(const std::string &tooltipText);
     void ShowParsingErrorDialog();
     void FlavorIdentifierDisplay(const std::string &flavorName);
+    void RenderMainMenu();
 };
 #endif

@@ -22,8 +22,8 @@ void YouiGui::Init()
 
     auto currentApplicationFolder = std::string(getcwd(NULL, 0));
 
-    std::string bodyFontPath = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
-    bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 18.0f, &mainFontConfig);
+    std::string bodyFontPath = "/Library/Fonts/Andale Mono.ttf";
+    bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
 
     ImFontConfig icons_config;
     icons_config.PixelSnapH = true;
@@ -31,10 +31,10 @@ void YouiGui::Init()
     icons_config.OversampleH = 3;
 
     // Merge this font with the default font for now.
-    std::string iconsFontPath = currentApplicationFolder + "/../../fonts/FontAwesome/fa-solid-900.ttf";
+    std::string iconsFontPath = "/Library/Fonts/fonts/fontawesome/fa-solid-900.ttf";
     io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 16.0f, &icons_config, icons_ranges);
 
-    std::string fileBrowserFont = currentApplicationFolder + "/../../fonts/Roboto_Mono/RobotoMono-Regular.ttf";
+    std::string fileBrowserFont = "/Library/Fonts/Andale Mono.ttf";
     filebrowserFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
 
     // Header 1 font
@@ -42,7 +42,7 @@ void YouiGui::Init()
     h1FontConfig.FontDataOwnedByAtlas = true;
     h1FontConfig.MergeMode = false;
     h1FontConfig.OversampleH = 3;
-    std::string h1FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
+    std::string h1FontPath = "/Library/Fonts/Andale Mono.ttf";
     H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 48.0f, &h1FontConfig);
 
     // Header 2 font
@@ -50,16 +50,37 @@ void YouiGui::Init()
     h2FontConfig.FontDataOwnedByAtlas = true;
     h2FontConfig.MergeMode = false;
     h2FontConfig.OversampleH = 3;
-    std::string h2FontPath = currentApplicationFolder + "/../../fonts/Raleway/Raleway-BoldItalic.ttf";
+    std::string h2FontPath = "/Library/Fonts/Andale Mono.ttf";
     H2Font = io.Fonts->AddFontFromFileTTF(h2FontPath.c_str(), 28.0f, &h1FontConfig);
 }
 
 void YouiGui::Render()
 {
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow(&m_youiGuiDataModel.demoWindow.visible);
+
+    if (m_youiGuiDataModel.devMode.active && m_youiGuiDataModel.devMode.demoWindow.visible)
+    {
+        ImGui::ShowDemoWindow(&m_youiGuiDataModel.devMode.demoWindow.visible);
+    }
+
     RenderMainAEPanel(&m_youiGuiDataModel.mainAEPanel.visible);
+
     ImGui::Render();
+}
+
+void YouiGui::RenderMainMenu()
+{
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("Tools"))
+        {
+            ImGui::MenuItem("Developer Mode", NULL, &m_youiGuiDataModel.devMode.active);
+            ImGui::MenuItem("Demo Window", NULL, &m_youiGuiDataModel.devMode.demoWindow.visible);
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
+    }
 }
 
 void YouiGui::RenderMainAEPanel(bool *open)
@@ -72,16 +93,29 @@ void YouiGui::RenderMainAEPanel(bool *open)
     ImGui::PushFont(bodyFont);
 
     ImGuiWindowFlags window_flags = 0;
-//    window_flags |= ImGuiWindowFlags_NoTitleBar;
-//    window_flags |= ImGuiWindowFlags_NoMove;
-//    window_flags |= ImGuiWindowFlags_NoResize;
-//    window_flags |= ImGuiWindowFlags_NoCollapse;
-//    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-//    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-//    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
+
+    if (!m_youiGuiDataModel.devMode.active)
+    {
+        window_flags |= ImGuiWindowFlags_NoTitleBar;
+        window_flags |= ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoResize;
+        window_flags |= ImGuiWindowFlags_NoCollapse;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always);
+    }
+    else
+    {
+        window_flags |= ImGuiWindowFlags_MenuBar;
+    }
 
     ImGui::Begin("Design System", open, window_flags);
     {
+        if (m_youiGuiDataModel.devMode.active)
+        {
+            RenderMainMenu();
+        }
+
         TabBar(bDesignSystemLoaded);
 
         if (bDesignSystemLoaded)
@@ -92,8 +126,8 @@ void YouiGui::RenderMainAEPanel(bool *open)
                 RenderTypographyTab(&m_youiGuiDataModel.mainAEPanel.TypographyTabVisible);
                 RenderMotionTab(&m_youiGuiDataModel.mainAEPanel.MotionTabVisible);
                 RenderLayoutTab(&m_youiGuiDataModel.mainAEPanel.LayoutTabVisible);
-                RenderSettingsTab(&m_youiGuiDataModel.mainAEPanel.SettingsTabVisible);
                 RenderDesignSystemInstructionsTab(&m_youiGuiDataModel.mainAEPanel.DesignTabVisible);
+                RenderSettingsTab(&m_youiGuiDataModel.mainAEPanel.SettingsTabVisible);
             }
             ImGui::EndTabBar();
         }
@@ -235,16 +269,16 @@ void YouiGui::RenderTypographyTab(bool *open)
                         ImGui::Text(refCount.c_str(), "");
                         ImGui::SameLine();
 
-                        if (ImGui::ColorButton(styleName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
-                        {
-                            CommandAddLinkedSolid(color);
-                        }
-
+//                        if (ImGui::ColorButton(styleName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
+//                        {
+//                            CommandAddLinkedSolid(color);
+//                        }
+//
                         ImGui::PushFont(font);
                         ImGui::SameLine();
-                        ImGui::TextWrapped(fontName.c_str());
+                        ImGui::TextColored(color, fontName.c_str());
                         ImGui::SameLine();
-                        ImGui::TextWrapped(std::to_string(fontSize).c_str());
+                        ImGui::TextColored(color, std::to_string(fontSize).c_str());
                         ImGui::PopFont();
                     }
                     ImGui::EndChildFrame();
@@ -345,11 +379,14 @@ void YouiGui::RenderSettingsTab(bool *open)
 
         ImGuiIO &io = ImGui::GetIO();
         static float window_scale = 1.0f;
+
         if (ImGui::DragFloat("window scale", &window_scale, 0.005f, 0.3f, 2.0f, "%.2f"))
         {   // scale only this window
             ImGui::SetWindowFontScale(window_scale);
         }
+
         ImGui::DragFloat("global scale", &io.FontGlobalScale, 0.005f, 0.3f, 2.0f, "%.2f");      // scale everything
+        ImGui::Checkbox("Developer Mode", &m_youiGuiDataModel.devMode.active);
 
         ImGui::EndTabItem();
     }
