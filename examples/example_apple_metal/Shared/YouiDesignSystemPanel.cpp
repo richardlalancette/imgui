@@ -8,7 +8,7 @@
 
 using json = nlohmann::json;
 
-void YouiGui::Init()
+void YouiGui::Init(std::unique_ptr<AuthoringToolInterface> delegate)
 {
     SetYouiLightTheme();
 
@@ -52,6 +52,8 @@ void YouiGui::Init()
     h2FontConfig.OversampleH = 3;
     std::string h2FontPath = "/Library/Fonts/Andale Mono.ttf";
     H2Font = io.Fonts->AddFontFromFileTTF(h2FontPath.c_str(), 28.0f, &h1FontConfig);
+
+    m_toolDelegate = std::move(delegate);
 }
 
 void YouiGui::Render()
@@ -64,6 +66,7 @@ void YouiGui::Render()
     }
 
     RenderMainAEPanel(&m_youiGuiDataModel.mainAEPanel.visible);
+    m_toolDelegate->Render();
 
     ImGui::Render();
 }
@@ -166,17 +169,7 @@ void YouiGui::RenderColorTab(bool *open)
 
                 // Show only the first flavor
                 auto flavor = (*flavors)[0];
-//                for (auto &flavor : *flavors)
                 {
-//                    DetailedColorTooltip("Additional information and \nmetadata can be found here.", ICON_FA_INFO_CIRCLE, flavor.name->c_str());
-//                    ImGui::SameLine();
-//
-//                    ImGui::PushFont(H2Font);
-//                    ImGui::TextWrapped(flavor.name->c_str());
-//
-//                    ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
-//                    ImGui::PopFont();
-
                     ImGui::Indent();
 
                     for (auto &colorSwatch : *flavor.flavor_colors)
@@ -199,13 +192,7 @@ void YouiGui::RenderColorTab(bool *open)
 
                         ImGui::SameLine();
                         ImGui::TextWrapped(colorName);
-                        //DetailsColorButton(colorName, color, colorDisplayFlags);
-//                        DisplayNotes(colorSwatch.metadata);
                     }
-
-//                    ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
-//                    ImGui::Separator();
-//                    ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
                 }
             }
             else
@@ -483,37 +470,6 @@ void YouiGui::CommandAddLinkedSolid(float *color)
         app.endUndoGroup();
 
     }
-
-     function setupPalette()
-        {
-            app.beginUndoGroup("create style dictionary");
-
-            // find current comp, if any
-            var myComp = null;
-            for (var i = 1; i <= app.project.numItems; i ++) {
-                if ((app.project.item(i) instanceof CompItem) && (app.project.item(i).name === 'Color Palette'))
-                {
-                    myComp = app.project.item(i);
-
-                    // clear it out
-                    for(var i = myComp.numLayers; i > 0; i--)
-                    {
-                        myComp.layer(i).remove();
-                    }
-                    break;
-                }
-            }
-
-            // create if not existing
-            if (myComp == null)
-                myComp=app.project.items.addComp("Color Palette", 720, 576, 1, 1, 25)
-
-            // create shapes container
-            var shapeLayer = myComp.layers.addShape();
-            shapeLayer.name = "Color Palette"
-
-            app.endUndoGroup();
-        }
      */
 
     // 1) make a fill effect on selected layer
@@ -824,7 +780,7 @@ void YouiGui::DisplayNotes(std::shared_ptr<std::vector<std::string>> notes)
     }
 }
 
-void YouiGui::TryToOpenDesignSystem(const std::string &designSystemFilename)
+void YouiGui::ProcessDesignSystemFile(const std::string &designSystemFilename)
 {
     recently_used_files.push_back(designSystemFilename);
 
@@ -836,23 +792,23 @@ void YouiGui::TryToOpenDesignSystem(const std::string &designSystemFilename)
         {
             bDesignSystemLoaded = true;
             gDesignSystem = nlohmann::json::parse(designSystemJsonFile);
-            auto typography = gDesignSystem.typography;
+            m_toolDelegate->SetupColorPalette(gDesignSystem);
 
-            if (typography != nullptr)
+            auto flavors = gDesignSystem.typography->flavors;
+
+            // TODO process all flavors to find fonts
+            // For this PoC we are doing only one.
+            auto flavor = (*flavors)[0];
+
+            for (auto &typeStyle : *flavor.typography_styles)
             {
-                auto flavors = typography->flavors;
-                auto flavor = (*flavors)[0];
+                auto fontName = *typeStyle.fontname;
+                int fontSize = *typeStyle.fontsize;
+                std::string path = fontName;
 
-                for (auto &typeStyle : *flavor.typography_styles)
-                {
-                    auto fontName = *typeStyle.fontname;
-                    int fontSize = *typeStyle.fontsize;
-                    std::string path = fontName;
+                YouiGui::FontDetailsTupleType fontDetails = std::tie(fontName, fontSize);
 
-                    YouiGui::FontDetailsTupleType fontDetails = std::tie(fontName, fontSize);
-
-                    gFontToLoadOnNextPast[fontDetails] = path;
-                }
+                gFontToLoadMap[fontDetails] = path;
             }
         }
         catch(json::parse_error)
@@ -929,7 +885,7 @@ void YouiGui::TabBar(bool bDesignSystemLoaded)
 //
 //                    if (!designSystemFilename.empty())
 //                    {
-//                        TryToOpenDesignSystem(designSystemFilename);
+//                        ProcessDesignSystemFile(designSystemFilename);
 //                    }
 //                }
 //                ImGui::PopFont();
@@ -940,44 +896,49 @@ void YouiGui::TabBar(bool bDesignSystemLoaded)
 
     if (ImGui::Button(ICON_FA_FOLDER_OPEN))
     {
-        TryToOpenDesignSystem("/Users/richardlalancette/Desktop/DesignSystemV3.json");
+        ProcessDesignSystemFile("/Users/richardlalancette/Desktop/DesignSystemV3.json");
     }
+
     YouiSimpleTooltip("Open a design system file. (.json)");
+
+    RenderReloadDesignSystemButton(bDesignSystemLoaded);
 
     if (bDesignSystemLoaded)
     {
         ImGui::SameLine();
 
-        if (ImGui::Button(ICON_FA_SYNC))
-        {
-            TryToOpenDesignSystem("/Users/richardlalancette/Desktop/DesignSystemV3.json");
-        }
-
-        YouiSimpleTooltip("Reload design system file.");
-        ImGui::SameLine();
-
         static ImGuiComboFlags flags = 0;
-        const char *fakeFlavors[] = {"Default", "JVR"};
-        static const char *itemCurrent = fakeFlavors[0];
 
-        if (ImGui::BeginCombo("", itemCurrent, flags))
+        std::shared_ptr<youi::Colors> colors = gDesignSystem.colors;
+
+        if (colors != nullptr)
         {
-            for (int n = 0; n < IM_ARRAYSIZE(fakeFlavors); n++)
+            std::shared_ptr<std::vector<youi::ColorsFlavor>> flavors = colors->flavors;
+
+            if (m_youiGuiDataModel.designSystem.selectedFlavor.empty())
             {
-                bool is_selected = (itemCurrent == fakeFlavors[n]);
-
-                if (ImGui::Selectable(fakeFlavors[n], is_selected))
-                {
-                    itemCurrent = fakeFlavors[n];
-                }
-
-                if (is_selected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
+                m_youiGuiDataModel.designSystem.selectedFlavor = *flavors->at(0).name;
             }
 
-            ImGui::EndCombo();
+            if (ImGui::BeginCombo("", m_youiGuiDataModel.designSystem.selectedFlavor.c_str(), flags))
+            {
+                for (int n = 0; n < flavors->size(); n++)
+                {
+                    bool is_selected = (m_youiGuiDataModel.designSystem.selectedFlavor == *flavors->at(n).name);
+
+                    if (ImGui::Selectable(flavors->at(n).name->c_str(), is_selected))
+                    {
+                        m_youiGuiDataModel.designSystem.selectedFlavor = *flavors->at(n).name;
+                    }
+
+                    if (is_selected)
+                    {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+
+                ImGui::EndCombo();
+            }
         }
     }
 }
@@ -1137,4 +1098,28 @@ void YouiGui::DetailedColorTooltip(const char *desc, const char *icon, const cha
         ImGui::EndTooltip();
     }
     ImGui::PopFont();
+}
+
+void YouiGui::RenderReloadDesignSystemButton(bool bDesignSystemLoaded)
+{
+    ImGui::SameLine();
+
+    if (!bDesignSystemLoaded)
+    {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+    }
+
+    if (ImGui::Button(ICON_FA_SYNC))
+    {
+        ProcessDesignSystemFile("/Users/richardlalancette/Desktop/DesignSystemV3.json");
+    }
+
+    if (!bDesignSystemLoaded)
+    {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+    }
+
+    YouiSimpleTooltip("Reload design system file.");
 }

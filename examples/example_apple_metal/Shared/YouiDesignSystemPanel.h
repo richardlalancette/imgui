@@ -4,6 +4,7 @@
 #include "designsystem.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "AuthoringToolInterface.h"
 
 class YouiGui
 {
@@ -19,7 +20,8 @@ public:
     bool bWindowBrowseFiles = false;
     bool bDesignSystemLoaded = false;
     std::vector<std::string> recently_used_files;
-    std::map<FontDetailsTupleType, std::string> gFontToLoadOnNextPast;
+    std::map<FontDetailsTupleType, std::string> gFontToLoadMap;
+    std::unique_ptr<AuthoringToolInterface> m_toolDelegate;
 
 public:
     std::map<std::string, ImFont *> userFonts;
@@ -47,10 +49,15 @@ public:
             } demoWindow;
 
         } devMode;
+
+        struct
+        {
+            std::string selectedFlavor;
+        } designSystem;
     } m_youiGuiDataModel;
 
 public:
-    void Init();
+    void Init(std::unique_ptr<AuthoringToolInterface> delegate);
     void Render();
     void RenderMainAEPanel(bool *open);
     void RenderColorTab(bool *open);
@@ -79,7 +86,7 @@ public:
 
     void DetailsColorButton(const char *text, float col[4], ImGuiColorEditFlags flags);
     void DisplayNotes(std::shared_ptr<std::vector<std::string>> notes);
-    void TryToOpenDesignSystem(const std::string &designSystemFilename);
+    void ProcessDesignSystemFile(const std::string &designSystemFilename);
     void TabPageHeader(const std::string &string, ImTextureID textureId);
     void DetailedColorTooltip(const char *desc, const char *icon = "?", const char *flavorName = "");
     void TabBar(bool b);
@@ -87,5 +94,6 @@ public:
     void ShowParsingErrorDialog();
     void FlavorIdentifierDisplay(const std::string &flavorName);
     void RenderMainMenu();
+    void RenderReloadDesignSystemButton(bool b);
 };
 #endif

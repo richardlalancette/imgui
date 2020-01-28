@@ -4,6 +4,7 @@
 #include "imgui_impl_metal.h"
 
 #import "YouiDesignSystemPanel.h"
+#include "DesktopToolDelegate.h"
 
 #if TARGET_OS_OSX
 #include "imgui_impl_osx.h"
@@ -15,6 +16,7 @@
 @end
 
 YouiGui gYouiGui;
+std::unique_ptr<AuthoringToolInterface> m_toolDelegate;
 
 @implementation Renderer
 
@@ -28,7 +30,7 @@ YouiGui gYouiGui;
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        gYouiGui.Init();
+        gYouiGui.Init(std::make_unique<DesktopToolDelegate>());
         ImGui_ImplMetal_Init(_device);
     }
 
@@ -63,16 +65,16 @@ YouiGui gYouiGui;
         id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder pushDebugGroup:@"ImGui demo"];
 
-        if (!gYouiGui.gFontToLoadOnNextPast.empty())
+        if (!gYouiGui.gFontToLoadMap.empty())
         {
-            for (auto &pair : gYouiGui.gFontToLoadOnNextPast)
+            for (auto &pair : gYouiGui.gFontToLoadMap)
             {
                 gYouiGui.LoadUserFont(pair.first, pair.second);
             }
 
             ImGui_ImplMetal_CreateFontsTexture(view.device);
 
-            gYouiGui.gFontToLoadOnNextPast.clear();
+            gYouiGui.gFontToLoadMap.clear();
         }
 
         // Start the Dear ImGui frame
