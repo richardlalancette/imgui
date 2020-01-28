@@ -38,7 +38,6 @@
 		C500C910588C6CA1C7965F9D /* YouiDesignSystemPanel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500CC7EFDF15A1FB63FAE5D /* YouiDesignSystemPanel.cpp */; };
 		C500CA63A88B1923C71550FE /* ImguiWindowsFileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500C59FC0C129E89DDAA7A9 /* ImguiWindowsFileIO.cpp */; };
 		C500CD42D696684D2C61B634 /* AuthoringToolInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500CA68D04028307C3C428B /* AuthoringToolInterface.cpp */; };
-		C500CFFED8E6FEF1643665A2 /* AfterEffectToolDelegate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C500C19FB0ECE5874B76BEAB /* AfterEffectToolDelegate.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -78,7 +77,6 @@
 		C500C1540558A61183CD56DB /* SourceCodePro-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-Regular.ttf"; sourceTree = "<group>"; };
 		C500C15924ABF33DD0A46F93 /* Roboto-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Roboto-Regular.ttf"; sourceTree = "<group>"; };
 		C500C174D072261D264052B0 /* Raleway-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-ExtraBold.ttf"; sourceTree = "<group>"; };
-		C500C19FB0ECE5874B76BEAB /* AfterEffectToolDelegate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AfterEffectToolDelegate.cpp; sourceTree = "<group>"; };
 		C500C1B77A54202F2847EE48 /* Roboto-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Roboto-Black.ttf"; sourceTree = "<group>"; };
 		C500C1DFF1F55DF924E95E28 /* Raleway-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-ExtraLight.ttf"; sourceTree = "<group>"; };
 		C500C20E7B30E6EBAADF5D77 /* SourceCodePro-SemiBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
@@ -162,7 +160,6 @@
 		C500CB9CAB3E112369C6CF20 /* B612Mono-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "B612Mono-Italic.ttf"; sourceTree = "<group>"; };
 		C500CBEA1DEB9BE52AD3CE69 /* OFL.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		C500CBFE0289E42B4D727405 /* Raleway-BlackItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-BlackItalic.ttf"; sourceTree = "<group>"; };
-		C500CBFECEC17D3C17D6F97E /* AfterEffectToolDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AfterEffectToolDelegate.h; sourceTree = "<group>"; };
 		C500CC0E3258B2253BA1AA50 /* Raleway-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "Raleway-Medium.ttf"; sourceTree = "<group>"; };
 		C500CC1AA74ACD493BD9D18F /* RobotoMono-ThinItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "RobotoMono-ThinItalic.ttf"; sourceTree = "<group>"; };
 		C500CC679B056456A4E547ED /* SourceCodePro-MediumItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; path = "SourceCodePro-MediumItalic.ttf"; sourceTree = "<group>"; };
@@ -251,8 +248,6 @@
 				C500C41EFB6DDD9188D8AC36 /* AuthoringToolInterface.h */,
 				C500C32B85FB425AE5C79CD9 /* DesktopToolDelegate.cpp */,
 				C500CFAB191E50EB6D18360D /* DesktopToolDelegate.h */,
-				C500C19FB0ECE5874B76BEAB /* AfterEffectToolDelegate.cpp */,
-				C500CBFECEC17D3C17D6F97E /* AfterEffectToolDelegate.h */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -721,7 +716,6 @@
 				C500CA63A88B1923C71550FE /* ImguiWindowsFileIO.cpp in Sources */,
 				C500C75864EFB96940CC4614 /* YouiDesignSystemPanel.cpp in Sources */,
 				C500C70E9A3078C7AA12CE5A /* DesktopToolDelegate.cpp in Sources */,
-				C500CFFED8E6FEF1643665A2 /* AfterEffectToolDelegate.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
