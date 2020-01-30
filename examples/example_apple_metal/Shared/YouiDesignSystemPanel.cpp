@@ -65,7 +65,13 @@ void YouiGui::Render()
         ImGui::ShowDemoWindow(&m_youiGuiDataModel.devMode.demoWindow.visible);
     }
 
+    if (m_youiGuiDataModel.devMode.active || !m_youiGuiDataModel.mainAEPanel.visible)
+    {
+        RenderMainMenu();
+    }
+
     RenderMainAEPanel(&m_youiGuiDataModel.mainAEPanel.visible);
+
     m_toolDelegate->Render();
 
     ImGui::Render();
@@ -73,16 +79,22 @@ void YouiGui::Render()
 
 void YouiGui::RenderMainMenu()
 {
-    if (ImGui::BeginMenuBar())
+    if (ImGui::BeginMainMenuBar())
     {
-        if (ImGui::BeginMenu("Tools"))
+        if (ImGui::BeginMenu("Window"))
         {
-            ImGui::MenuItem("Developer Mode", NULL, &m_youiGuiDataModel.devMode.active);
+            ImGui::MenuItem("Main Window", NULL, &m_youiGuiDataModel.mainAEPanel.visible);
             ImGui::MenuItem("Demo Window", NULL, &m_youiGuiDataModel.devMode.demoWindow.visible);
             ImGui::EndMenu();
         }
 
-        ImGui::EndMenuBar();
+        if (ImGui::BeginMenu("Tools"))
+        {
+            ImGui::MenuItem("Developer Mode", NULL, &m_youiGuiDataModel.devMode.active);
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
     }
 }
 
@@ -95,7 +107,7 @@ void YouiGui::RenderMainAEPanel(bool *open)
 
     ImGui::PushFont(bodyFont);
 
-    ImGuiWindowFlags window_flags = 0;
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
 
     if (!m_youiGuiDataModel.devMode.active)
     {
@@ -109,16 +121,14 @@ void YouiGui::RenderMainAEPanel(bool *open)
     }
     else
     {
+        ImVec2 &framePadding = ImGui::GetStyle().FramePadding;
+        ImGui::SetNextWindowPos(ImVec2(framePadding.x * 5, framePadding.y * 5), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x/4, ImGui::GetIO().DisplaySize.y*0.75), ImGuiCond_Always);
         window_flags |= ImGuiWindowFlags_MenuBar;
     }
 
     ImGui::Begin("Design System", open, window_flags);
     {
-        if (m_youiGuiDataModel.devMode.active)
-        {
-            RenderMainMenu();
-        }
-
         TabBar(bDesignSystemLoaded);
 
         if (bDesignSystemLoaded)
@@ -138,6 +148,8 @@ void YouiGui::RenderMainAEPanel(bool *open)
         {
             RenderEmptyDesignSystemTab();
         }
+
+        m_youiGuiDataModel.RenderAdditionalWindows();
     }
 
     ImGui::End();
@@ -179,15 +191,15 @@ void YouiGui::RenderColorTab(bool *open)
 
                         float color[] = {static_cast<float>(*colorRGBA.r), static_cast<float>(*colorRGBA.g), static_cast<float>(*colorRGBA.b), static_cast<float>(*colorRGBA.a)};
 
-                        std::string valueToHash = std::string(flavor.name->c_str()) + colorSwatch.name->c_str();
-                        size_t hash1 = std::hash<std::string>{}(valueToHash);
+                        std::string fullTokenName = std::string(flavor.name->c_str()) + colorSwatch.name->c_str();
+                        size_t hash1 = std::hash<std::string>{}(fullTokenName);
                         std::string refCount = std::to_string(hash1 % 6);
                         ImGui::Text(refCount.c_str(), "");
                         ImGui::SameLine();
 
                         if (ImGui::ColorButton(colorName, color, colorDisplayFlags, ImVec2(30.0f, 30.0f)))
                         {
-                            CommandAddLinkedSolid(color);
+                            CommandAddLinkedSolid(fullTokenName, color);
                         }
 
                         ImGui::SameLine();
@@ -339,7 +351,7 @@ void YouiGui::RenderSettingsTab(bool *open)
     if (ImGui::BeginTabItem(ICON_FA_COGS " Settings"))
     {
         static int style_idx = -1;
-        if (ImGui::Combo("Colors##Selector", &style_idx, "Classic\0Dark\0Light\0Youi Light\0Youi Dark\0"))
+        if (ImGui::Combo("Colors##Selector", &style_idx, "Classic\0Dark\0Light\0Youi Light\0Youi Dark\0AEDark\0"))
         {
             switch (style_idx)
             {
@@ -357,6 +369,9 @@ void YouiGui::RenderSettingsTab(bool *open)
                     break;
                 case 4:
                     SetYouiDarkTheme();
+                    break;
+                case 5:
+                    SetAfterEffectDarkTheme();
                     break;
                 default:
                     ImGui::StyleColorsClassic();
@@ -434,8 +449,10 @@ void YouiGui::RenderEmptyDesignSystemTab()
     ImGui::EndChild();
 }
 
-void YouiGui::CommandAddLinkedSolid(float *color)
+void YouiGui::CommandAddLinkedSolid(const std::string &fullTokenName, float *color)
 {
+    m_youiGuiDataModel.notificationWindows[fullTokenName] = std::make_tuple(fullTokenName, "", "", 2500);
+    
     /*
     function makeColorEntry(name, color)
     {
@@ -597,6 +614,89 @@ void YouiGui::SetYouiLightTheme()
 }
 
 void YouiGui::SetYouiDarkTheme()
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+
+    style.WindowPadding.x = 10;
+    style.WindowPadding.y = 10;
+    style.FramePadding.x = 5;
+    style.FramePadding.y = 5;
+    style.ItemSpacing.x = 5;
+    style.ItemSpacing.y = 5;
+    style.ItemInnerSpacing.x = 5;
+    style.ItemInnerSpacing.y = 5;
+    style.TouchExtraPadding.x = 0;
+    style.TouchExtraPadding.y = 0;
+    style.IndentSpacing = 20;
+    style.ScrollbarSize = 10;
+    style.GrabMinSize = 5;
+
+    style.WindowBorderSize = 0;
+    style.ChildBorderSize = 1;
+    style.PopupBorderSize = 1;
+    style.FrameBorderSize = 1;
+    style.TabBorderSize = 1;
+
+    style.WindowRounding = 2;
+    style.ChildRounding = 2;
+    style.FrameRounding = 2;
+    style.PopupRounding = 2;
+    style.ScrollbarRounding = 2;
+    style.GrabRounding = 2;
+    style.TabRounding = 2;
+
+    ImVec4 *colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+    colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.29f, 0.48f, 0.54f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.29f, 0.48f, 1.00f);
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
+    colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
+    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
+    colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
+    colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
+    colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
+    colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 0.25f);
+    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+    colors[ImGuiCol_Tab] = ImLerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.80f);
+    colors[ImGuiCol_TabHovered] = colors[ImGuiCol_HeaderHovered];
+    colors[ImGuiCol_TabActive] = ImLerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
+    colors[ImGuiCol_TabUnfocused] = ImLerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
+    colors[ImGuiCol_TabUnfocusedActive] = ImLerp(colors[ImGuiCol_TabActive], colors[ImGuiCol_TitleBg], 0.40f);
+    colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+    colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+    colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+    colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+}
+
+void YouiGui::SetAfterEffectDarkTheme()
 {
     ImGuiStyle &style = ImGui::GetStyle();
 
@@ -1122,4 +1222,78 @@ void YouiGui::RenderReloadDesignSystemButton(bool bDesignSystemLoaded)
     }
 
     YouiSimpleTooltip("Reload design system file.");
+}
+
+void YouiGui::YouiGuiDataModel::RenderAdditionalWindows()
+{
+    float x = 0;
+    float y = 0;
+
+    for (auto &notification : notificationWindows)
+    {
+        std::string name = std::get<0>(notification.second);
+        std::string details = std::get<1>(notification.second);
+        std::string iconName = std::get<2>(notification.second);
+        int durationLeft = std::get<3>(notification.second);
+        bool bFading = false;
+
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
+
+        window_flags |= ImGuiWindowFlags_NoTitleBar;
+        window_flags |= ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoResize;
+        window_flags |= ImGuiWindowFlags_NoScrollbar;
+
+        if (durationLeft > 0)
+        {
+            std::get<3>(notification.second) -= 10;
+
+            if (durationLeft<100)
+            {
+                float fade = durationLeft / 100.0f;
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, fade);
+                bFading = true;
+            }
+
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 5);
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
+
+            bool open = true;
+
+            ImGui::SetNextWindowSize(ImVec2(200, 100));
+            ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth() - 200 - ImGui::GetStyle().ItemSpacing.x, y + ImGui::GetStyle().ItemSpacing.y));
+            ImGui::Begin(name.c_str(), &open, window_flags);
+            ImGui::Text(std::to_string(durationLeft).c_str());
+            ImGui::Text(iconName.c_str());
+            ImGui::TextWrapped(details.c_str());
+            ImGui::End();
+
+            y += 100 + ImGui::GetStyle().ItemSpacing.y;
+
+            ImGui::PopStyleColor();
+
+            if (bFading)
+            {
+                ImGui::PopStyleVar();
+            }
+
+            ImGui::PopStyleVar();
+            ImGui::PopStyleVar();
+        }
+    }
+
+    for (auto it = notificationWindows.cbegin(); it != notificationWindows.cend() /* not hoisted */; /* no increment */)
+    {
+        int durationLeft = std::get<3>(it->second);
+        
+        if (durationLeft == 0)
+        {
+            notificationWindows.erase(it++);    // or "it = m.erase(it)" since C++11
+        }
+        else
+        {
+            ++it;
+        }
+    }
 }

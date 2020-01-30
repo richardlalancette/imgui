@@ -54,6 +54,13 @@ public:
         {
             std::string selectedFlavor;
         } designSystem;
+
+        typedef std::tuple<std::string, std::string, std::string, int> notificationInfo;
+
+        std::map<std::string, notificationInfo> notificationWindows;
+
+        void RenderAdditionalWindows();
+
     } m_youiGuiDataModel;
 
 public:
@@ -68,10 +75,11 @@ public:
     void RenderDesignSystemInstructionsTab(bool *open);
     void RenderEmptyDesignSystemTab();
 
-    void CommandAddLinkedSolid(float *color);
+    void CommandAddLinkedSolid(const std::string &fullTokenName, float *color);
 
     void SetYouiLightTheme();
     void SetYouiDarkTheme();
+    void SetAfterEffectDarkTheme();
     bool CheckFileExist(const std::string &path);
 
     /*
