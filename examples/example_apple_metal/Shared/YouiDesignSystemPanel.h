@@ -16,6 +16,7 @@ public:
     ImFont *filebrowserFont = nullptr;
     ImFont *H1Font = nullptr;
     ImFont *H2Font = nullptr;
+    ImFont *iconMoonFont = nullptr;
 
     bool bWindowBrowseFiles = false;
     bool bDesignSystemLoaded = false;
@@ -103,5 +104,6 @@ public:
     void FlavorIdentifierDisplay(const std::string &flavorName);
     void RenderMainMenu();
     void RenderReloadDesignSystemButton(bool b);
+    void RenderOpenDesignSystemButton();
 };
 #endif
