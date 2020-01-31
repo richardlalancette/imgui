@@ -16,6 +16,7 @@ public:
     ImFont *filebrowserFont = nullptr;
     ImFont *H1Font = nullptr;
     ImFont *H2Font = nullptr;
+    ImFont *fontDefault = nullptr;
     ImFont *iconMoonFont = nullptr;
 
     bool bWindowBrowseFiles = false;

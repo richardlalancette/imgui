@@ -14,7 +14,9 @@ void YouiGui::Init(std::unique_ptr<AuthoringToolInterface> delegate)
 
     static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImGuiIO &io = ImGui::GetIO();
-    io.Fonts->AddFontDefault();
+    bodyFont = io.Fonts->AddFontDefault();
+//    std::string bodyFontPath = "/Library/Fonts/Andale Mono.ttf";
+//    bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
 
     ImFontConfig mainFontConfig;
     mainFontConfig.FontDataOwnedByAtlas = true;
@@ -22,8 +24,6 @@ void YouiGui::Init(std::unique_ptr<AuthoringToolInterface> delegate)
 
     auto currentApplicationFolder = std::string(getcwd(NULL, 0));
 
-    std::string bodyFontPath = "/Library/Fonts/Andale Mono.ttf";
-    bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
 
     ImFontConfig icons_config;
     icons_config.PixelSnapH = true;
@@ -35,7 +35,7 @@ void YouiGui::Init(std::unique_ptr<AuthoringToolInterface> delegate)
     io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 16.0f, &icons_config, icons_ranges);
 
     std::string fileBrowserFont = "/Library/Fonts/Andale Mono.ttf";
-    filebrowserFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
+    filebrowserFont = io.Fonts->AddFontFromFileTTF(fileBrowserFont.c_str(), 14.0f, &mainFontConfig);
 
     // Header 1 font
     ImFontConfig h1FontConfig;
@@ -1267,7 +1267,7 @@ void YouiGui::YouiGuiDataModel::RenderAdditionalWindows()
     for (auto it = notificationWindows.cbegin(); it != notificationWindows.cend() /* not hoisted */; /* no increment */)
     {
         int durationLeft = std::get<3>(it->second);
-        
+
         if (durationLeft == 0)
         {
             notificationWindows.erase(it++);    // or "it = m.erase(it)" since C++11
