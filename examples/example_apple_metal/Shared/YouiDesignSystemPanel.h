@@ -6,6 +6,8 @@
 #include "imgui_internal.h"
 #include "AuthoringToolInterface.h"
 
+#include "YouiGuiDataModel.h"
+
 class YouiGui
 {
 public:
@@ -24,51 +26,15 @@ public:
     std::vector<std::string> recently_used_files;
     std::map<FontDetailsTupleType, std::string> gFontToLoadMap;
     std::unique_ptr<AuthoringToolInterface> m_toolDelegate;
+    YouiGuiDataModel m_youiGuiDataModel;
 
 public:
     std::map<std::string, ImFont *> userFonts;
 
-    struct YouiGuiDataModel
-    {
-        struct
-        {
-            bool visible = true;
-            bool ColorsTabVisible = true;
-            bool TypographyTabVisible = true;
-            bool MotionTabVisible = false;
-            bool LayoutTabVisible = false;
-            bool SettingsTabVisible = true;
-            bool DesignTabVisible = true;
-        } mainAEPanel;
-
-        struct
-        {
-            bool active = false;
-
-            struct
-            {
-                bool visible = false;
-            } demoWindow;
-
-        } devMode;
-
-        struct
-        {
-            std::string selectedFlavor;
-        } designSystem;
-
-        typedef std::tuple<std::string, std::string, std::string, int> notificationInfo;
-
-        std::map<std::string, notificationInfo> notificationWindows;
-
-        void RenderAdditionalWindows();
-
-    } m_youiGuiDataModel;
-
 public:
     void Init(std::unique_ptr<AuthoringToolInterface> delegate);
     void Render();
-    void RenderMainAEPanel(bool *open);
+    void RenderMainAEPanel(bool *open, float clientRectY);
     void RenderColorTab(bool *open);
     void RenderTypographyTab(bool *open);
     void RenderMotionTab(bool *open);
@@ -106,5 +72,6 @@ public:
     void RenderMainMenu();
     void RenderReloadDesignSystemButton(bool b);
     void RenderOpenDesignSystemButton();
+    bool ShouldRenderMainMenu() const;
 };
 #endif

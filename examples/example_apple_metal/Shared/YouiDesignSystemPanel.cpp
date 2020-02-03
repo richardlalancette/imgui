@@ -2,6 +2,7 @@
 
 #include "json.hpp"
 #include "IconsFontAwesome5.h"
+#include "YouiGuiDataModel.h"
 
 #include <fstream>
 #include <zconf.h>
@@ -13,10 +14,8 @@ void YouiGui::Init(std::unique_ptr<AuthoringToolInterface> delegate)
     SetAfterEffectDarkTheme();
 
     static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+    static const ImWchar icons_ranges_icomatic[] = {0xe900, 0xe958, 0};
     ImGuiIO &io = ImGui::GetIO();
-    bodyFont = io.Fonts->AddFontDefault();
-//    std::string bodyFontPath = "/Library/Fonts/Andale Mono.ttf";
-//    bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 14.0f, &mainFontConfig);
 
     ImFontConfig mainFontConfig;
     mainFontConfig.FontDataOwnedByAtlas = true;
@@ -24,6 +23,12 @@ void YouiGui::Init(std::unique_ptr<AuthoringToolInterface> delegate)
 
     auto currentApplicationFolder = std::string(getcwd(NULL, 0));
 
+//    std::string mainFont = "fonts/imgui/ProggyClean.ttf";
+    std::string mainFont = "fonts/Source_Code_Pro/SourceCodePro-SemiBold.ttf";
+//    std::string mainFont = "fonts/Source_Code_Pro/SourceCodePro-Regular.ttf";
+    std::string bodyFontPath = "/Library/Fonts/" + mainFont;
+    bodyFont = io.Fonts->AddFontFromFileTTF(bodyFontPath.c_str(), 16.0f, &mainFontConfig);
+//    bodyFont = io.Fonts->AddFontDefault();
 
     ImFontConfig icons_config;
     icons_config.PixelSnapH = true;
@@ -31,27 +36,28 @@ void YouiGui::Init(std::unique_ptr<AuthoringToolInterface> delegate)
     icons_config.OversampleH = 3;
 
     // Merge this font with the default font for now.
-    std::string iconsFontPath = "/Library/Fonts/fonts/fontawesome/fa-solid-900.ttf";
-    io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 16.0f, &icons_config, icons_ranges);
+    std::string iconsFontPath = "/Library/Fonts/fonts/icomoon/icomoon.ttf";
+//    std::string iconsFontPath = "/Library/Fonts/fonts/fontawesome/fa-solid-900.ttf";
+    io.Fonts->AddFontFromFileTTF(iconsFontPath.c_str(), 18.0f, &icons_config, icons_ranges_icomatic);
 
-    std::string fileBrowserFont = "/Library/Fonts/Andale Mono.ttf";
-    filebrowserFont = io.Fonts->AddFontFromFileTTF(fileBrowserFont.c_str(), 14.0f, &mainFontConfig);
+    std::string fileBrowserFont = "/Library/Fonts/" + mainFont;
+    filebrowserFont = io.Fonts->AddFontFromFileTTF(fileBrowserFont.c_str(), 18.0f, &mainFontConfig);
 
     // Header 1 font
     ImFontConfig h1FontConfig;
     h1FontConfig.FontDataOwnedByAtlas = true;
     h1FontConfig.MergeMode = false;
     h1FontConfig.OversampleH = 3;
-    std::string h1FontPath = "/Library/Fonts/Andale Mono.ttf";
-    H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 48.0f, &h1FontConfig);
+    std::string h1FontPath = "/Library/Fonts/" + mainFont;
+    H1Font = io.Fonts->AddFontFromFileTTF(h1FontPath.c_str(), 32.0f, &h1FontConfig);
 
     // Header 2 font
     ImFontConfig h2FontConfig;
     h2FontConfig.FontDataOwnedByAtlas = true;
     h2FontConfig.MergeMode = false;
     h2FontConfig.OversampleH = 3;
-    std::string h2FontPath = "/Library/Fonts/Andale Mono.ttf";
-    H2Font = io.Fonts->AddFontFromFileTTF(h2FontPath.c_str(), 28.0f, &h1FontConfig);
+    std::string h2FontPath = "/Library/Fonts/" + mainFont;
+    H2Font = io.Fonts->AddFontFromFileTTF(h2FontPath.c_str(), 24.0f, &h1FontConfig);
 
 //    ImFontConfig IconMoonFontConfig;
 //    IconMoonFontConfig.FontDataOwnedByAtlas = true;
@@ -67,21 +73,30 @@ void YouiGui::Render()
 {
     ImGui::NewFrame();
 
+    float menuBottom = m_toolDelegate->RenderCustomMainMenu(m_youiGuiDataModel);
+
     if (m_youiGuiDataModel.devMode.active && m_youiGuiDataModel.devMode.demoWindow.visible)
     {
         ImGui::ShowDemoWindow(&m_youiGuiDataModel.devMode.demoWindow.visible);
     }
 
-    if (m_youiGuiDataModel.devMode.active || !m_youiGuiDataModel.mainAEPanel.visible)
+    if (ShouldRenderMainMenu())
     {
         RenderMainMenu();
     }
 
-    RenderMainAEPanel(&m_youiGuiDataModel.mainAEPanel.visible);
+    RenderMainAEPanel(&m_youiGuiDataModel.mainAEPanel.visible, menuBottom);
 
-    m_toolDelegate->Render();
+    m_toolDelegate->Render(m_youiGuiDataModel);
 
     ImGui::Render();
+}
+
+bool YouiGui::ShouldRenderMainMenu() const
+{
+    bool bToolShouldRenderMainMenu = m_toolDelegate->ShouldRenderDefaultMenu();
+
+    return m_youiGuiDataModel.devMode.active || !m_youiGuiDataModel.mainAEPanel.visible || bToolShouldRenderMainMenu;
 }
 
 void YouiGui::RenderMainMenu()
@@ -105,7 +120,7 @@ void YouiGui::RenderMainMenu()
     }
 }
 
-void YouiGui::RenderMainAEPanel(bool *open)
+void YouiGui::RenderMainAEPanel(bool *open, float clientRectY)
 {
     if (!*open)
     {
@@ -123,14 +138,14 @@ void YouiGui::RenderMainAEPanel(bool *open)
         window_flags |= ImGuiWindowFlags_NoResize;
         window_flags |= ImGuiWindowFlags_NoCollapse;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(0, clientRectY), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always);
     }
     else
     {
         ImVec2 &framePadding = ImGui::GetStyle().FramePadding;
-        ImGui::SetNextWindowPos(ImVec2(framePadding.x * 5, framePadding.y * 5), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x/4, ImGui::GetIO().DisplaySize.y*0.75), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(framePadding.x * 5, framePadding.y * 5 + clientRectY), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x/4, ImGui::GetIO().DisplaySize.y * 0.75), ImGuiCond_Always);
         window_flags |= ImGuiWindowFlags_MenuBar;
     }
 
@@ -1173,7 +1188,7 @@ void YouiGui::DetailedColorTooltip(const char *desc, const char *icon, const cha
 
 void YouiGui::RenderOpenDesignSystemButton()
 {
-    if (ImGui::Button(ICON_FA_FOLDER_OPEN))
+    if (ImGui::Button("\ue91c"))
     {
         ProcessDesignSystemFile("/Users/richardlalancette/Desktop/DesignSystemV3.json");
     }
@@ -1191,7 +1206,7 @@ void YouiGui::RenderReloadDesignSystemButton(bool bDesignSystemLoaded)
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
     }
 
-    if (ImGui::Button(ICON_FA_SYNC))
+    if (ImGui::Button("\ue943"))
     {
         ProcessDesignSystemFile("/Users/richardlalancette/Desktop/DesignSystemV3.json");
     }
@@ -1205,76 +1220,3 @@ void YouiGui::RenderReloadDesignSystemButton(bool bDesignSystemLoaded)
     YouiSimpleTooltip("Reload design system file.");
 }
 
-void YouiGui::YouiGuiDataModel::RenderAdditionalWindows()
-{
-    float x = 0;
-    float y = 0;
-
-    for (auto &notification : notificationWindows)
-    {
-        std::string name = std::get<0>(notification.second);
-        std::string details = std::get<1>(notification.second);
-        std::string iconName = std::get<2>(notification.second);
-        int durationLeft = std::get<3>(notification.second);
-        bool bFading = false;
-
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
-
-        window_flags |= ImGuiWindowFlags_NoTitleBar;
-        window_flags |= ImGuiWindowFlags_NoMove;
-        window_flags |= ImGuiWindowFlags_NoResize;
-        window_flags |= ImGuiWindowFlags_NoScrollbar;
-
-        if (durationLeft > 0)
-        {
-            std::get<3>(notification.second) -= 10;
-
-            if (durationLeft<100)
-            {
-                float fade = durationLeft / 100.0f;
-                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, fade);
-                bFading = true;
-            }
-
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 5);
-            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
-
-            bool open = true;
-
-            ImGui::SetNextWindowSize(ImVec2(200, 100));
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth() - 200 - ImGui::GetStyle().ItemSpacing.x, y + ImGui::GetStyle().ItemSpacing.y));
-            ImGui::Begin(name.c_str(), &open, window_flags);
-            ImGui::Text(std::to_string(durationLeft).c_str());
-            ImGui::Text(iconName.c_str());
-            ImGui::TextWrapped(details.c_str());
-            ImGui::End();
-
-            y += 100 + ImGui::GetStyle().ItemSpacing.y;
-
-            ImGui::PopStyleColor();
-
-            if (bFading)
-            {
-                ImGui::PopStyleVar();
-            }
-
-            ImGui::PopStyleVar();
-            ImGui::PopStyleVar();
-        }
-    }
-
-    for (auto it = notificationWindows.cbegin(); it != notificationWindows.cend() /* not hoisted */; /* no increment */)
-    {
-        int durationLeft = std::get<3>(it->second);
-
-        if (durationLeft == 0)
-        {
-            notificationWindows.erase(it++);    // or "it = m.erase(it)" since C++11
-        }
-        else
-        {
-            ++it;
-        }
-    }
-}

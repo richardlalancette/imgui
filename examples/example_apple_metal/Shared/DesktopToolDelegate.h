@@ -1,5 +1,5 @@
-#ifndef _DESKTOPTOOLDELEGATE_H_
-#define _DESKTOPTOOLDELEGATE_H_
+#ifndef _DESKTOP_TOOL_DELEGATE_H_
+#define _DESKTOP_TOOL_DELEGATE_H_
 
 #include "AuthoringToolInterface.h"
 
@@ -10,7 +10,9 @@ class DesktopToolDelegate : public AuthoringToolInterface
 {
 public:
     void SetupColorPalette(youi::DesignSystem system) override;
-    void Render() override;
+    void Render(const YouiGuiDataModel &model) override;
+    bool ShouldRenderDefaultMenu() override;
+    float RenderCustomMainMenu(YouiGuiDataModel &model) override;
 };
 
 #endif
